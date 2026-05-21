@@ -1,0 +1,343 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String?
+  status              String   @default("active")
+  salesMeetingsTarget Int?
+  endedAt             DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  links               ClientLink[]
+  payments            Payment[]
+  campaigns           ClientCampaign[]
+  landingPages        LandingPage[]
+  analysisRuns        AnalysisRun[]
+  assets              ClientAsset[]
+  convertedFromLeads  Lead[] @relation("ClientConvertedFromLead")
+  meetings            Meeting[]
+  tasks               Task[]
+  journeys            Journey[]
+}
+
+model ClientAsset {
+  id          String   @id @default(cuid())
+  clientId    String
+  kind        String   // creative_image | creative_video | brief | note
+  label       String
+  text        String?  // for kind=brief (pasted text) or kind=note
+  filePath    String?  // absolute path under ./uploads, for creative_image/creative_video/brief (file)
+  mimeType    String?
+  createdAt   DateTime @default(now())
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+model ClientLink {
+  id       String @id @default(cuid())
+  clientId String
+  label    String
+  url      String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+model Payment {
+  id         String   @id @default(cuid())
+  clientId   String
+  type       String   // closed | paid | owed
+  amount     Float
+  currency   String   @default("ILS")
+  note       String?
+  occurredAt DateTime @default(now())
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+}
+
+model MetaConnection {
+  id          String   @id @default(cuid())
+  fbUserId    String?
+  fbUserName  String?
+  accessToken String
+  expiresAt   DateTime?
+  scope       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  accounts MetaAccount[]
+}
+
+model MetaAccount {
+  id            String    @id // "act_..."
+  connectionId  String
+  name          String
+  currency      String?
+  timezoneName  String?
+  accountStatus Int?
+  businessName  String?
+  enabled       Boolean   @default(true)
+  lastSyncedAt  DateTime?
+
+  connection MetaConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@index([connectionId])
+}
+
+model Campaign {
+  id            String   @id // Meta campaign id
+  adAccountId   String
+  name          String
+  status        String?
+  objective     String?
+  lastSyncedAt  DateTime @default(now())
+  isAgencyOwned Boolean  @default(false)
+
+  clients ClientCampaign[]
+  stats   CampaignDailyStat[]
+
+  @@index([isAgencyOwned])
+}
+
+model ClientCampaign {
+  clientId   String
+  campaignId String
+  attachedAt DateTime @default(now())
+
+  client   Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([clientId, campaignId])
+  @@index([campaignId])
+}
+
+model CampaignDailyStat {
+  id                 String   @id @default(cuid())
+  campaignId         String
+  date               DateTime
+  spend              Float    @default(0)
+  impressions        Int      @default(0)
+  clicks             Int      @default(0)
+  ctr                Float    @default(0)
+  cpm                Float    @default(0)
+  leads              Int      @default(0)
+  costPerLead        Float    @default(0)
+  conversions        Int      @default(0)
+  costPerConversion  Float    @default(0)
+  actionsJson        String?
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, date])
+  @@index([date])
+}
+
+model LandingPage {
+  id              String   @id @default(cuid())
+  clientId        String
+  label           String
+  sourceType      String   // url | html | image
+  sourceUrl       String?
+  htmlPath        String?
+  imagePath       String?
+  screenshotPath  String?
+  createdAt       DateTime @default(now())
+
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  analysisRuns AnalysisRun[]
+
+  @@index([clientId])
+}
+
+model AnalysisRun {
+  id                String    @id @default(cuid())
+  clientId          String
+  landingPageId     String?
+  campaignIdsJson   String    @default("[]")
+  startedAt         DateTime  @default(now())
+  finishedAt        DateTime?
+  status            String    @default("running") // running | done | error
+  model             String    @default("claude-opus-4-7")
+  inputSnapshotJson String    @default("{}")
+  outputJson        String?
+  errorMessage      String?
+  inputTokens       Int       @default(0)
+  outputTokens      Int       @default(0)
+  cacheReadTokens   Int       @default(0)
+  cacheWriteTokens  Int       @default(0)
+
+  client      Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  landingPage LandingPage? @relation(fields: [landingPageId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+}
+
+model LeadList {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  webhookToken String   @unique
+  createdAt    DateTime @default(now())
+
+  leads    Lead[]
+  statuses LeadStatus[]
+}
+
+model LeadStatus {
+  id                  String  @id @default(cuid())
+  name                String
+  color               String  @default("#64748b")
+  order               Int     @default(0)
+  isDefault           Boolean @default(false)
+  isConvertedTarget   Boolean @default(false)
+  listId              String? // null = global
+  list                LeadList? @relation(fields: [listId], references: [id], onDelete: Cascade)
+  leads               Lead[]
+
+  @@index([listId])
+}
+
+model Lead {
+  id                 String    @id @default(cuid())
+  listId             String
+  name               String
+  phone              String?
+  email              String?
+  utmJson            String?   // JSON.stringified {source,medium,campaign,content,term}
+  customFieldsJson   String    @default("{}")
+  statusId           String
+  notes              String    @default("")
+  convertedClientId  String?
+  firstContactAt     DateTime?
+  viewedAt           DateTime?
+  createdAt          DateTime  @default(now())
+
+  list             LeadList    @relation(fields: [listId], references: [id], onDelete: Cascade)
+  status           LeadStatus  @relation(fields: [statusId], references: [id])
+  convertedClient  Client?     @relation("ClientConvertedFromLead", fields: [convertedClientId], references: [id], onDelete: SetNull)
+  activities       LeadActivity[]
+
+  @@index([listId])
+  @@index([statusId])
+  @@index([convertedClientId])
+  @@index([viewedAt])
+}
+
+model LeadActivity {
+  id        String   @id @default(cuid())
+  leadId    String
+  type      String   // created | status_change | note | converted
+  payload   String   @default("{}") // JSON
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
+}
+
+model CrmSettings {
+  id                String  @id @default("singleton")
+  notificationEmail String?
+  updatedAt         DateTime @updatedAt
+}
+
+model Meeting {
+  id          String   @id @default(cuid())
+  clientId    String
+  title       String
+  scheduledAt DateTime?
+  status      String   @default("scheduled") // scheduled | held | cancelled | no_show
+  attendees   String   @default("")
+  notes       String   @default("")
+  outcome     String   @default("")
+  whatWorked     String   @default("")
+  whatToImprove  String   @default("")
+  link        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([scheduledAt])
+}
+
+model Task {
+  id             String    @id @default(cuid())
+  clientId       String
+  space          String    // sales | marketing
+  title          String
+  description    String    @default("")
+  priority       String    @default("normal") // low | normal | high
+  dueDate        DateTime?
+  status         String    @default("open")   // open | done
+  completedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  linkedStageId  String?   @unique
+
+  client       Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  linkedStage  JourneyStage? @relation(fields: [linkedStageId], references: [id], onDelete: SetNull)
+
+  @@index([clientId])
+  @@index([clientId, space, status])
+  @@index([dueDate])
+}
+
+model Journey {
+  id                 String   @id @default(cuid())
+  clientId           String
+  kind               String   // organic | paid
+  videoCount         Int
+  status             String   @default("active") // active | completed
+  currentStageIndex  Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  client Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  stages JourneyStage[]
+
+  @@unique([clientId, kind])
+  @@index([clientId])
+}
+
+model JourneyStage {
+  id          String   @id @default(cuid())
+  journeyId   String
+  index       Int
+  kind        String   // writing | filming | editing | strategy | ads_writing | ad_filming | creative
+  mode        String   // single | per_video
+  docLink     String?
+  filmingDate DateTime?
+  status      String   @default("locked") // locked | active | done
+  taskId      String?  @unique
+
+  journey    Journey            @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  task       Task?
+  videoItems JourneyVideoItem[]
+
+  @@unique([journeyId, index])
+  @@index([journeyId])
+}
+
+model JourneyVideoItem {
+  id      String    @id @default(cuid())
+  stageId String
+  index   Int
+  done    Boolean   @default(false)
+  doneAt  DateTime?
+
+  stage JourneyStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@unique([stageId, index])
+}
