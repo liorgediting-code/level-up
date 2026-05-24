@@ -11,11 +11,25 @@ export function rangeStart(range: RangeKey) {
 }
 
 export async function aggregateForClient(clientId: string, range: RangeKey = "30d") {
-  const since = rangeStart(range);
   const attached = await prisma.clientCampaign.findMany({
     where: { clientId },
     include: { campaign: true },
   });
+  return aggregateForCampaigns(attached.map((a) => a.campaign), range);
+}
+
+export async function aggregateForCampaignIds(ids: string[], range: RangeKey = "30d") {
+  if (!ids.length) return { totals: empty(), perCampaign: [] as PerCampaign[], campaigns: [] };
+  const campaigns = await prisma.campaign.findMany({ where: { id: { in: ids } } });
+  return aggregateForCampaigns(campaigns, range);
+}
+
+async function aggregateForCampaigns(
+  attachedCampaigns: { id: string; name: string; status: string | null; objective: string | null }[],
+  range: RangeKey
+) {
+  const since = rangeStart(range);
+  const attached = attachedCampaigns.map((campaign) => ({ campaignId: campaign.id, campaign }));
   const ids = attached.map((a) => a.campaignId);
   if (!ids.length) {
     return { totals: empty(), perCampaign: [] as PerCampaign[], campaigns: [] };

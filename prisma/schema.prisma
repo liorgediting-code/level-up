@@ -27,6 +27,12 @@ model Client {
   meetings            Meeting[]
   tasks               Task[]
   journeys            Journey[]
+  transcriptSessions  TranscriptSession[]
+  recordingFolders    RecordingFolder[]
+  metricColumns       ClientMetricColumn[]
+  metricRows          ClientMetricRow[]
+  notes               Note[]
+  targets             Target[]
 }
 
 model ClientAsset {
@@ -106,6 +112,7 @@ model Campaign {
 
   clients ClientCampaign[]
   stats   CampaignDailyStat[]
+  funnels FunnelCampaign[]
 
   @@index([isAgencyOwned])
 }
@@ -340,4 +347,180 @@ model JourneyVideoItem {
   stage JourneyStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
 
   @@unique([stageId, index])
+}
+
+model TranscriptSession {
+  id             String    @id @default(cuid())
+  clientId       String?
+  folderId       String?
+  title          String?
+  language       String    @default("he")
+  startedAt      DateTime  @default(now())
+  endedAt        DateTime?
+  createdAt      DateTime  @default(now())
+  summary        String?
+  audioPath      String?   // absolute path to uploaded webm under ./uploads/transcripts
+  audioMime      String?
+  transcribeStatus String  @default("pending") // pending | transcribing | ready | failed
+  transcribeError  String?
+
+  client Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  folder RecordingFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  chunks TranscriptChunk[]
+
+  @@index([clientId])
+  @@index([folderId])
+  @@index([startedAt])
+}
+
+model RecordingFolder {
+  id        String   @id @default(cuid())
+  name      String
+  parentId  String?
+  clientId  String?
+  createdAt DateTime @default(now())
+
+  parent   RecordingFolder?    @relation("FolderParent", fields: [parentId], references: [id], onDelete: SetNull)
+  children RecordingFolder[]   @relation("FolderParent")
+  client   Client?             @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  sessions TranscriptSession[]
+
+  @@index([parentId])
+  @@index([clientId])
+}
+
+model TranscriptChunk {
+  id        String   @id @default(cuid())
+  sessionId String
+  text      String
+  isFinal   Boolean  @default(true)
+  startMs   Int      @default(0)
+  endMs     Int      @default(0)
+  speaker   String   @default("other") // user | other
+  createdAt DateTime @default(now())
+
+  session TranscriptSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sessionId, startMs])
+}
+
+model ClientMetricColumn {
+  id        String   @id @default(cuid())
+  clientId  String
+  key       String
+  label     String
+  unit      String   @default("number")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, key])
+  @@index([clientId, sortOrder])
+}
+
+model ClientMetricRow {
+  id          String   @id @default(cuid())
+  clientId    String
+  periodMonth DateTime
+  leads       Int      @default(0)
+  revenue     Int      @default(0)
+  customers   Int      @default(0)
+  extraJson   String   @default("{}")
+  updatedAt   DateTime @updatedAt
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, periodMonth])
+  @@index([clientId, periodMonth])
+}
+
+model Funnel {
+  id          String   @id @default(cuid())
+  name        String
+  description String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  campaigns   FunnelCampaign[]
+  columns     FunnelMetricColumn[]
+  rows        FunnelMetricRow[]
+  notes       Note[]
+}
+
+model FunnelCampaign {
+  funnelId   String
+  campaignId String
+  createdAt  DateTime @default(now())
+
+  funnel     Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([funnelId, campaignId])
+  @@index([campaignId])
+}
+
+model FunnelMetricColumn {
+  id        String   @id @default(cuid())
+  funnelId  String
+  key       String
+  label     String
+  unit      String   @default("number")
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+
+  funnel    Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@unique([funnelId, key])
+  @@index([funnelId, sortOrder])
+}
+
+model FunnelMetricRow {
+  id          String   @id @default(cuid())
+  funnelId    String
+  periodMonth DateTime
+  valuesJson  String   @default("{}")
+  updatedAt   DateTime @updatedAt
+
+  funnel      Funnel   @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@unique([funnelId, periodMonth])
+  @@index([funnelId, periodMonth])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  scope     String
+  targetId  String
+  body      String
+  createdAt DateTime @default(now())
+
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  funnelId  String?
+  funnel    Funnel?  @relation(fields: [funnelId], references: [id], onDelete: Cascade)
+
+  @@index([scope, targetId, createdAt])
+  @@index([clientId])
+  @@index([funnelId])
+}
+
+model Target {
+  id          String   @id @default(cuid())
+  periodType  String   // week | month | quarter | year
+  periodStart DateTime // normalized start of the period (UTC midnight)
+  scope       String   // income | client | metric
+  clientId    String?  // set when scope = client
+  label       String   // metric / description (e.g. "הכנסות", "לידים", client goal)
+  unit        String   @default("number") // number | currency | percent
+  targetValue Int      @default(0) // agorot when unit = currency
+  actualValue Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client      Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([periodType, periodStart])
+  @@index([clientId])
 }

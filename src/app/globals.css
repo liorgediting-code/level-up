@@ -53,3 +53,9 @@ tbody tr:hover > .table-td { background: oklch(0.985 0.005 250); }
   box-shadow: 0 6px 16px oklch(0.56 0.22 258 / 0.28);
 }
 .nav-item-active:hover { background: oklch(0.5 0.22 258); color: oklch(1 0 0); }
+
+/* Notes panel: shift main content to the visual left when open. */
+body.with-notes-panel main { padding-left: 20rem; }
+@media (max-width: 768px) {
+  body.with-notes-panel main { padding-left: 0; }
+}

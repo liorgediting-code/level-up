@@ -15,6 +15,7 @@
     "https://*.zoom.us/*",
     "https://meet.google.com/*",
     "https://teams.microsoft.com/*",
+    "http://localhost:3000/*",
     "https://*/*"
   ],
   "background": {
@@ -39,7 +40,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["pcm-worklet.js", "offscreen.html"],
+      "resources": ["pcm-worklet.js", "offscreen.html", "permission.html"],
       "matches": ["<all_urls>"]
     }
   ],

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <title>אישור מיקרופון</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; background: #0f1115; color: #eaecef; padding: 40px; max-width: 480px; margin: 0 auto; line-height: 1.5; }
+      h1 { font-size: 18px; margin: 0 0 12px; }
+      p { font-size: 13px; opacity: 0.85; margin: 0 0 18px; }
+      button { background: #3454ff; color: white; border: 0; padding: 10px 16px; border-radius: 8px; font-size: 14px; cursor: pointer; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      #status { margin-top: 16px; font-size: 13px; }
+      .ok { color: #34d399; }
+      .err { color: #f87171; }
+    </style>
+  </head>
+  <body>
+    <h1>אישור גישה למיקרופון</h1>
+    <p>
+      התוסף צריך הרשאת מיקרופון כדי להקליט את הקול שלך לצד שיחת הפגישה.
+      ההרשאה ניתנת פעם אחת ונשמרת.
+    </p>
+    <button id="grant">אפשר מיקרופון</button>
+    <div id="status"></div>
+    <script src="permission.js"></script>
+  </body>
+</html>

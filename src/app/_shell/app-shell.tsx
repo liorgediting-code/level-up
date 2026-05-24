@@ -1,10 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import NotesPanel from "@/components/notes-panel";
 
 const NAV = [
   { href: "/", label: "סקירה כללית", icon: HomeIcon },
   { href: "/clients", label: "לקוחות", icon: UsersIcon },
+  { href: "/goals", label: "מטרות", icon: TargetIcon },
+  { href: "/funnels", label: "משפכים", icon: FunnelIcon },
+  { href: "/sales", label: "מכירות", icon: MicIcon },
   { href: "/campaigns", label: "קמפיינים", icon: MegaphoneIcon },
   { href: "/crm", label: "CRM", icon: InboxIcon, badgeKey: "unread" as const },
   { href: "/settings", label: "הגדרות", icon: GearIcon },
@@ -20,6 +24,14 @@ export default function AppShell({
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+
+  const clientMatch = /^\/clients\/([^/]+)(?:\/|$)/.exec(pathname);
+  const funnelMatch = /^\/funnels\/([^/]+)(?:\/|$)/.exec(pathname);
+  const noteScope = clientMatch
+    ? { scope: "client" as const, targetId: clientMatch[1] }
+    : funnelMatch
+    ? { scope: "funnel" as const, targetId: funnelMatch[1] }
+    : null;
 
   return (
     <div className="flex min-h-screen bg-bg">
@@ -74,7 +86,26 @@ export default function AppShell({
       <main className="min-w-0 flex-1">
         <div className="mx-auto max-w-[1400px] px-6 py-6 lg:px-10 lg:py-8">{children}</div>
       </main>
+
+      {noteScope && <NotesPanel scope={noteScope.scope} targetId={noteScope.targetId} />}
     </div>
+  );
+}
+
+function FunnelIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z" />
+    </svg>
+  );
+}
+function TargetIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="12" r="8" />
+      <circle cx="12" cy="12" r="4" />
+      <circle cx="12" cy="12" r="0.6" fill="currentColor" />
+    </svg>
   );
 }
 
@@ -109,6 +140,16 @@ function InboxIcon(p: React.SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
       <path d="M4 13.5 6 5h12l2 8.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-5.5Z" />
       <path d="M4 13.5h4l1.25 2h5.5L16 13.5h4" />
+    </svg>
+  );
+}
+function MicIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 12a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 18.5V21" />
+      <path d="M9 21h6" />
     </svg>
   );
 }

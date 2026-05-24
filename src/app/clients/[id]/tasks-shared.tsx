@@ -29,6 +29,7 @@ export default function TasksShared({
 }) {
   const router = useRouter();
   const [quickAdd, setQuickAdd] = useState("");
+  const [quickDue, setQuickDue] = useState("");
   const [filter, setFilter] = useState<"open" | "done" | "all">("open");
   const [openId, setOpenId] = useState<string | null>(null);
 
@@ -41,9 +42,14 @@ export default function TasksShared({
     await fetch(`/api/clients/${clientId}/tasks`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ space, title }),
+      body: JSON.stringify({
+        space,
+        title,
+        dueDate: quickDue ? new Date(quickDue).toISOString() : null,
+      }),
     });
     setQuickAdd("");
+    setQuickDue("");
     router.refresh();
   }
 
@@ -62,13 +68,20 @@ export default function TasksShared({
 
   return (
     <div>
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         <input
           value={quickAdd}
           onChange={(e) => setQuickAdd(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && createQuick()}
           placeholder="הוסף משימה ולחץ Enter"
-          className="input flex-1"
+          className="input flex-1 min-w-0"
+        />
+        <input
+          type="date"
+          value={quickDue}
+          onChange={(e) => setQuickDue(e.target.value)}
+          className="input"
+          title="תאריך יעד (לא חובה)"
         />
         <select value={filter} onChange={(e) => setFilter(e.target.value as "open" | "done" | "all")} className="input">
           <option value="open">פתוחות</option>
@@ -106,9 +119,15 @@ export default function TasksShared({
             >
               {PRIORITY_LABEL[t.priority]}
             </span>
-            {t.dueDate && (
-              <span className="text-xs text-muted">{new Date(t.dueDate).toLocaleDateString("he-IL")}</span>
-            )}
+            {t.dueDate && (() => {
+              const due = new Date(t.dueDate);
+              const overdue = t.status !== "done" && due.getTime() < Date.now();
+              return (
+                <span className={`text-xs ${overdue ? "text-amber-500 font-medium" : "text-muted"}`}>
+                  {due.toLocaleDateString("he-IL")}
+                </span>
+              );
+            })()}
           </li>
         ))}
         {visible.length === 0 && <li className="text-sm text-muted">אין משימות בתצוגה זו.</li>}
