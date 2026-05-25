@@ -78,10 +78,13 @@ export default function ListClient(props: {
         <thead className="text-right text-xs text-muted">
           <tr>
             <th className="p-2">שם</th>
-            <th className="p-2">טלפון/אימייל</th>
+            <th className="p-2">טלפון</th>
+            <th className="p-2">אימייל</th>
             <th className="p-2">סטטוס</th>
+            <th className="p-2">הערות</th>
             <th className="p-2">מקור</th>
             <th className="p-2">הגיע</th>
+            <th className="p-2"></th>
           </tr>
         </thead>
         <tbody>
@@ -92,18 +95,29 @@ export default function ListClient(props: {
               className={`cursor-pointer border-t hover:bg-border/20 ${!l.viewedAt ? "font-semibold" : ""}`}
             >
               <td className="p-2">{l.name}</td>
-              <td className="p-2">{l.phone || l.email || "-"}</td>
+              <td className="p-2">{l.phone || "-"}</td>
+              <td className="p-2">{l.email || "-"}</td>
               <td className="p-2">
                 <span className="rounded-full px-2 py-0.5 text-xs text-white" style={{ background: l.statusColor }}>
                   {l.statusName}
                 </span>
               </td>
+              <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                <NotesCell lead={l} onChanged={() => router.refresh()} />
+              </td>
               <td className="p-2 text-xs">{l.utm?.source ?? "-"}</td>
               <td className="p-2 text-xs">{new Date(l.createdAt).toLocaleString("he-IL")}</td>
+              <td className="p-2" onClick={(e) => e.stopPropagation()}>
+                <DeleteLeadButton
+                  leadId={l.id}
+                  leadName={l.name}
+                  onDeleted={() => { if (openId === l.id) setOpenId(null); router.refresh(); }}
+                />
+              </td>
             </tr>
           ))}
           {filtered.length === 0 && (
-            <tr><td colSpan={5} className="p-4 text-center text-sm text-muted">אין לידים בתצוגה זו.</td></tr>
+            <tr><td colSpan={8} className="p-4 text-center text-sm text-muted">אין לידים בתצוגה זו.</td></tr>
           )}
         </tbody>
       </table>
@@ -167,7 +181,14 @@ function LeadDrawer({
       >
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">{lead.name}</h2>
-          <button onClick={onClose} className="text-sm text-muted">סגור</button>
+          <div className="flex items-center gap-3">
+            <DeleteLeadButton
+              leadId={lead.id}
+              leadName={lead.name}
+              onDeleted={() => { onClose(); onChanged(); }}
+            />
+            <button onClick={onClose} className="text-sm text-muted">סגור</button>
+          </div>
         </div>
 
         <dl className="mb-4 space-y-1 text-sm">
@@ -243,6 +264,69 @@ function LeadDrawer({
         </div>
       </aside>
     </div>
+  );
+}
+
+function NotesCell({ lead, onChanged }: { lead: Lead; onChanged: () => void }) {
+  const [value, setValue] = useState(lead.notes);
+  const [editing, setEditing] = useState(false);
+
+  // Keep in sync if the server data changes underneath us.
+  useEffect(() => { if (!editing) setValue(lead.notes); }, [lead.notes, editing]);
+
+  async function save() {
+    setEditing(false);
+    if (value === lead.notes) return;
+    await fetch(`/api/crm/leads/${lead.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ notes: value }),
+    });
+    onChanged();
+  }
+
+  if (editing) {
+    return (
+      <textarea
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={save}
+        className="h-16 w-44 rounded-md border px-2 py-1 text-xs"
+      />
+    );
+  }
+  return (
+    <button
+      onClick={() => setEditing(true)}
+      className="block w-44 truncate text-right text-xs text-muted hover:text-foreground"
+      title={lead.notes || "הוסף הערה"}
+    >
+      {lead.notes || <span className="italic">+ הוסף הערה</span>}
+    </button>
+  );
+}
+
+function DeleteLeadButton({
+  leadId, leadName, onDeleted,
+}: { leadId: string; leadName: string; onDeleted: () => void }) {
+  const [busy, setBusy] = useState(false);
+  async function del() {
+    if (!confirm(`למחוק את הליד "${leadName}" לצמיתות?`)) return;
+    setBusy(true);
+    const r = await fetch(`/api/crm/leads/${leadId}`, { method: "DELETE" });
+    setBusy(false);
+    if (!r.ok) { alert("מחיקה נכשלה"); return; }
+    onDeleted();
+  }
+  return (
+    <button
+      onClick={del}
+      disabled={busy}
+      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+    >
+      מחק
+    </button>
   );
 }
 

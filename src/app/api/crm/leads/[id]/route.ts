@@ -70,3 +70,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const existing = await prisma.lead.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ ok: true });
+  // Activities cascade-delete via the Lead relation.
+  await prisma.lead.delete({ where: { id } });
+  return NextResponse.json({ ok: true });
+}
