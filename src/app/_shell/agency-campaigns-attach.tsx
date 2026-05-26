@@ -79,7 +79,7 @@ export default function AgencyCampaignsAttach({ campaigns }: { campaigns: Camp[]
                     type="checkbox"
                     checked={checked}
                     onChange={() => toggle(c)}
-                    className="h-4 w-4 cursor-pointer accent-[oklch(0.56_0.22_258)]"
+                    className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
                   />
                 </label>
               );

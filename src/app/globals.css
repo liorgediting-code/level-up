@@ -2,6 +2,25 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Accent theme — orange by default, switchable to the original blue via
+   [data-theme="blue"] on <html> (toggled from Settings, persisted in localStorage). */
+:root {
+  --accent: oklch(0.62 0.18 50);
+  --accent-soft: oklch(0.95 0.045 60);
+  --accent-ink: oklch(0.48 0.15 50);
+  --accent-strong: oklch(0.55 0.18 50);
+  --accent-soft-hover: oklch(0.91 0.07 60);
+  --accent-ring: oklch(0.62 0.18 50 / 0.2);
+}
+[data-theme="blue"] {
+  --accent: oklch(0.56 0.22 258);
+  --accent-soft: oklch(0.95 0.05 258);
+  --accent-ink: oklch(0.36 0.18 258);
+  --accent-strong: oklch(0.5 0.22 258);
+  --accent-soft-hover: oklch(0.92 0.07 258);
+  --accent-ring: oklch(0.56 0.22 258 / 0.18);
+}
+
 html, body { height: 100%; }
 body {
   background: oklch(0.965 0.008 250);
@@ -21,12 +40,12 @@ body {
 .btn-primary { @apply btn bg-accent text-white hover:bg-accent-ink; }
 .btn-ghost { @apply btn border border-border bg-surface text-fg hover:border-border-strong hover:bg-elevated; }
 .btn-soft { @apply btn bg-accent-soft text-accent-ink; }
-.btn-soft:hover { background: oklch(0.92 0.07 258); }
+.btn-soft:hover { background: var(--accent-soft-hover); }
 
 .input {
   @apply w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none transition-colors;
 }
-.input:focus { border-color: oklch(0.56 0.22 258); box-shadow: 0 0 0 3px oklch(0.56 0.22 258 / 0.12); }
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-ring); }
 
 .label { @apply text-[11px] font-medium uppercase tracking-[0.08em] text-muted; }
 
@@ -48,11 +67,11 @@ tbody tr:hover > .table-td { background: oklch(0.985 0.005 250); }
 }
 .nav-item:hover { background: oklch(0.96 0.008 250); color: oklch(0.22 0.02 250); }
 .nav-item-active {
-  background: oklch(0.56 0.22 258);
+  background: var(--accent);
   color: oklch(1 0 0);
-  box-shadow: 0 6px 16px oklch(0.56 0.22 258 / 0.28);
+  box-shadow: 0 6px 16px var(--accent-ring);
 }
-.nav-item-active:hover { background: oklch(0.5 0.22 258); color: oklch(1 0 0); }
+.nav-item-active:hover { background: var(--accent-strong); color: oklch(1 0 0); }
 
 /* Notes panel: shift main content to the visual left when open. */
 body.with-notes-panel main { padding-left: 20rem; }

@@ -26,6 +26,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="he" dir="rtl" className={heebo.variable}>
+      <head>
+        {/* Apply saved accent theme before paint to avoid a color flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('astral-theme')==='blue')document.documentElement.setAttribute('data-theme','blue')}catch(e){}`,
+          }}
+        />
+      </head>
       <body>
         <AppShell unread={unread}>{children}</AppShell>
       </body>

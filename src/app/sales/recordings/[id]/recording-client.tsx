@@ -264,7 +264,7 @@ export default function RecordingClient(props: {
                   <span
                     className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium ${
                       isUser
-                        ? "bg-accent/15 text-accent-ink"
+                        ? "bg-accent-soft text-accent-ink"
                         : "bg-emerald-500/15 text-emerald-500"
                     }`}
                   >

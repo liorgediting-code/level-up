@@ -74,7 +74,7 @@ export default function CampaignsClient({ campaigns, clients }: { campaigns: Cam
                       type="checkbox"
                       checked={c.isAgencyOwned}
                       onChange={(e) => toggleAgency(c.id, e.target.checked)}
-                      className="h-4 w-4 cursor-pointer accent-[oklch(0.56_0.22_258)]"
+                      className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
                     />
                     {c.isAgencyOwned && <span className="pill-accent">שלנו</span>}
                   </label>

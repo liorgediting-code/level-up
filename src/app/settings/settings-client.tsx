@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type Account = {
   id: string;
@@ -36,6 +36,23 @@ export default function SettingsClient({
   const [syncing, setSyncing] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [result, setResult] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"orange" | "blue">("orange");
+
+  useEffect(() => {
+    setTheme(document.documentElement.getAttribute("data-theme") === "blue" ? "blue" : "orange");
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === "blue" ? "orange" : "blue";
+    if (next === "blue") {
+      document.documentElement.setAttribute("data-theme", "blue");
+      try { localStorage.setItem("astral-theme", "blue"); } catch {}
+    } else {
+      document.documentElement.removeAttribute("data-theme");
+      try { localStorage.removeItem("astral-theme"); } catch {}
+    }
+    setTheme(next);
+  }
 
   async function sync() {
     setSyncing(true);
@@ -200,6 +217,16 @@ export default function SettingsClient({
         <p className="mt-3 text-xs text-muted">
           חשוב: בעת ה-OAuth תקבלו טוקן משתמש לטווח של ~60 יום. כשהוא יפוג פשוט לחצו &quot;חבר מחדש&quot; כאן.
         </p>
+      </div>
+
+      {/* Discreet accent-theme toggle — orange ⇄ blue. Intentionally subtle. */}
+      <div className="pt-10 text-center">
+        <button
+          onClick={toggleTheme}
+          title={theme === "blue" ? "החזר לכתום" : "החלף לכחול"}
+          aria-label="החלף ערכת צבע"
+          className="inline-block h-2.5 w-2.5 rounded-full bg-border-strong opacity-40 transition-all hover:scale-150 hover:opacity-100 hover:bg-accent"
+        />
       </div>
     </div>
   );
