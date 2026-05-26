@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Chunk = { id: string; text: string; startMs: number; speaker: string };
+type Chunk = { id: string; text: string; startMs: number; endMs: number; speaker: string };
 type Lite = { id: string; name: string };
 
 function fmtClock(ms: number) {
@@ -23,6 +23,8 @@ export default function RecordingClient(props: {
   clientId: string | null;
   folderId: string | null;
   summary: string | null;
+  summaryKind: string | null;
+  summaryGeneratedAt: string | null;
   transcribeStatus: string;
   transcribeError: string | null;
   clients: Lite[];
@@ -43,8 +45,14 @@ export default function RecordingClient(props: {
   const [title, setTitle] = useState(props.title ?? "");
   const [clientId, setClientId] = useState(props.clientId ?? "");
   const [folderId, setFolderId] = useState(props.folderId ?? "");
-  const [analyzing, setAnalyzing] = useState(false);
-  const [analyzeNote, setAnalyzeNote] = useState<string | null>(null);
+  const [flash, setFlash] = useState<string | null>(null);
+
+  const [genKind, setGenKind] = useState<null | "meeting" | "sales_call">(null);
+  const [genError, setGenError] = useState<string | null>(null);
+  const [showChoices, setShowChoices] = useState<boolean>(!props.summary);
+
+  const lastEndMs = props.chunks.reduce((m, c) => (c.endMs > m ? c.endMs : m), 0);
+  const eligible = lastEndMs >= 15 * 60 * 1000;
 
   async function save() {
     await fetch(`/api/recordings/sessions/${props.id}`, {
@@ -59,20 +67,27 @@ export default function RecordingClient(props: {
     router.refresh();
   }
 
-  async function analyze() {
-    setAnalyzing(true);
-    setAnalyzeNote(null);
+  async function generate(kind: "meeting" | "sales_call") {
+    setGenKind(kind);
+    setGenError(null);
     try {
-      const res = await fetch(`/api/recordings/sessions/${props.id}/analyze`, { method: "POST" });
-      if (res.status === 501) {
-        setAnalyzeNote("ניתוח AI עדיין לא מוגדר. הוסף הוראות כדי להפעיל.");
-      } else if (!res.ok) {
-        setAnalyzeNote("שגיאה בניתוח");
-      } else {
-        router.refresh();
+      const res = await fetch(`/api/recordings/${props.id}/summarize`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setGenError(data.error || "שגיאה בייצור סיכום");
+        if (res.status === 409) setTimeout(() => setGenError(null), 3000);
+        return;
       }
+      setShowChoices(false);
+      router.refresh();
+    } catch {
+      setGenError("שגיאה ברשת");
     } finally {
-      setAnalyzing(false);
+      setGenKind(null);
     }
   }
 
@@ -96,8 +111,8 @@ export default function RecordingClient(props: {
       .map((c) => `${c.speaker === "user" ? "אני" : "משתתפים"}: ${c.text}`)
       .join("\n");
     await navigator.clipboard.writeText(txt);
-    setAnalyzeNote("התמלול הועתק");
-    setTimeout(() => setAnalyzeNote(null), 2000);
+    setFlash("התמלול הועתק");
+    setTimeout(() => setFlash(null), 2000);
   }
 
   return (
@@ -212,27 +227,61 @@ export default function RecordingClient(props: {
 
       <section className="space-y-2 rounded-2xl border border-border bg-surface p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold">ניתוח AI</h2>
-          <div className="flex items-center gap-2">
-            <button onClick={copyTranscript} className="rounded-md border border-border bg-bg px-3 py-1.5 text-xs">העתק תמלול</button>
+          <h2 className="text-sm font-semibold">סיכום AI</h2>
+          <button onClick={copyTranscript} className="rounded-md border border-border bg-bg px-3 py-1.5 text-xs">
+            העתק תמלול
+          </button>
+        </div>
+
+        {eligible && (showChoices || !props.summary) && (
+          <div className="flex items-center gap-2 pt-1">
+            <span className="text-xs text-muted">צור סיכום:</span>
             <button
-              onClick={analyze}
-              disabled={analyzing}
+              onClick={() => generate("meeting")}
+              disabled={genKind !== null}
               className="rounded-md bg-accent px-3 py-1.5 text-xs text-white disabled:opacity-50"
             >
-              {analyzing ? "מנתח…" : "נתח עם AI"}
+              {genKind === "meeting" ? "מייצר…" : "פגישה"}
+            </button>
+            <button
+              onClick={() => generate("sales_call")}
+              disabled={genKind !== null}
+              className="rounded-md bg-accent px-3 py-1.5 text-xs text-white disabled:opacity-50"
+            >
+              {genKind === "sales_call" ? "מייצר…" : "שיחת מכירה"}
             </button>
           </div>
-        </div>
-        {props.summary ? (
-          <div className="whitespace-pre-wrap rounded-md bg-bg p-3 text-sm">{props.summary}</div>
-        ) : (
-          <div className="rounded-md border border-dashed border-border p-4 text-xs text-muted">
-            עדיין לא בוצע ניתוח. ההוראות יתווספו בהמשך. {analyzeNote && <span className="text-amber-500">— {analyzeNote}</span>}
-          </div>
         )}
-        {props.summary && analyzeNote && (
-          <div className="text-xs text-amber-500">{analyzeNote}</div>
+
+        {genError && <div className="text-xs text-rose-500">{genError}</div>}
+        {flash && <div className="text-xs text-amber-500">{flash}</div>}
+
+        {props.summary ? (
+          <>
+            <div className="whitespace-pre-wrap rounded-md bg-bg p-3 text-sm">{props.summary}</div>
+            <div className="flex items-center gap-3 text-[11px] text-muted">
+              {props.summaryKind && (
+                <span>סוג: {props.summaryKind === "meeting" ? "פגישה" : "שיחת מכירה"}</span>
+              )}
+              {props.summaryGeneratedAt && (
+                <span>נוצר: {new Date(props.summaryGeneratedAt).toLocaleString("he-IL")}</span>
+              )}
+              {!showChoices && (
+                <button
+                  onClick={() => setShowChoices(true)}
+                  className="text-accent-ink hover:underline"
+                >
+                  צור מחדש
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          !eligible && (
+            <div className="rounded-md border border-dashed border-border p-4 text-xs text-muted">
+              סיכום AI יהיה זמין כאשר התמלול יגיע ל-15 דקות לפחות.
+            </div>
+          )
         )}
       </section>
 
