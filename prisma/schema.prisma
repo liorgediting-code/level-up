@@ -260,6 +260,27 @@ model CrmSettings {
   updatedAt         DateTime @updatedAt
 }
 
+// Records EVERY inbound webhook POST — including rejected ones — so failed lead
+// deliveries are never silently lost. listId/rawBody are nullable because the
+// 401 (unknown list) and 413 (oversize) paths never reach a valid list / body.
+model WebhookDelivery {
+  id          String   @id @default(cuid())
+  listId      String?  // null when token/list lookup failed
+  status      Int      // HTTP status returned (200 created, 400/401/413 rejected)
+  outcome     String   // "created" | "rejected"
+  reason      String?  // rejection reason; null on success
+  leadId      String?  // set when a Lead was created
+  contentType String?
+  userAgent   String?
+  ip          String?
+  rawBody     String?  // truncated request body (null when unreadable/oversize)
+  createdAt   DateTime @default(now())
+
+  @@index([listId])
+  @@index([createdAt])
+  @@index([outcome])
+}
+
 model Meeting {
   id          String   @id @default(cuid())
   clientId    String
