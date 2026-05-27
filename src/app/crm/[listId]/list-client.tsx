@@ -80,10 +80,10 @@ export default function ListClient(props: {
             <th className="p-2">שם</th>
             <th className="p-2">טלפון</th>
             <th className="p-2">אימייל</th>
+            <th className="p-2">הגיע</th>
             <th className="p-2">סטטוס</th>
             <th className="p-2">הערות</th>
             <th className="p-2">מקור</th>
-            <th className="p-2">הגיע</th>
             <th className="p-2"></th>
           </tr>
         </thead>
@@ -97,6 +97,7 @@ export default function ListClient(props: {
               <td className="p-2">{l.name}</td>
               <td className="p-2">{l.phone || "-"}</td>
               <td className="p-2">{l.email || "-"}</td>
+              <td className="p-2 text-xs">{new Date(l.createdAt).toLocaleString("he-IL")}</td>
               <td className="p-2">
                 <span className="rounded-full px-2 py-0.5 text-xs text-white" style={{ background: l.statusColor }}>
                   {l.statusName}
@@ -106,7 +107,6 @@ export default function ListClient(props: {
                 <NotesCell lead={l} onChanged={() => router.refresh()} />
               </td>
               <td className="p-2 text-xs">{l.utm?.source ?? "-"}</td>
-              <td className="p-2 text-xs">{new Date(l.createdAt).toLocaleString("he-IL")}</td>
               <td className="p-2" onClick={(e) => e.stopPropagation()}>
                 <DeleteLeadButton
                   leadId={l.id}
