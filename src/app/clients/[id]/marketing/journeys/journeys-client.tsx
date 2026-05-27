@@ -91,7 +91,7 @@ function AddJourneyDialog({
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-lg bg-white p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-sm rounded-lg bg-surface p-5" onClick={(e) => e.stopPropagation()}>
         <h3 className="mb-3 text-lg font-semibold">הוסף מסלול {KIND_LABEL[kind]}</h3>
         <label className="block">
           <span className="mb-1 block text-xs text-muted">{kind === "organic" ? "כמות סרטונים מתוכננת" : "כמות מודעות מתוכננת"}</span>

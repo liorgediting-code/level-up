@@ -2,34 +2,44 @@ import type { Config } from "tailwindcss";
 
 export default {
   content: ["./src/**/*.{ts,tsx}"],
+  // Night mode flips via [data-mode="dark"] on <html>; this lets `dark:`
+  // variants target it for the few spots that use fixed Tailwind colors.
+  darkMode: ["selector", '[data-mode="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Light theme, neutrals tinted toward the brand blue.
-        bg: "oklch(0.965 0.008 250)",
-        surface: "oklch(1 0 0)",
-        elevated: "oklch(0.99 0.004 250)",
-        border: "oklch(0.92 0.008 250)",
-        "border-strong": "oklch(0.86 0.012 250)",
-        muted: "oklch(0.52 0.02 250)",
-        "muted-soft": "oklch(0.68 0.015 250)",
-        fg: "oklch(0.22 0.02 250)",
+        // Neutrals + semantics resolve through CSS variables so the whole
+        // palette flips under [data-mode="dark"]. Light values live in :root,
+        // dark overrides in globals.css. Accent is a separate axis (orange/blue).
+        bg: "var(--bg)",
+        surface: "var(--surface)",
+        elevated: "var(--elevated)",
+        border: "var(--border)",
+        "border-strong": "var(--border-strong)",
+        muted: "var(--muted)",
+        "muted-soft": "var(--muted-soft)",
+        fg: "var(--fg)",
         accent: "var(--accent)",
         "accent-soft": "var(--accent-soft)",
         "accent-ink": "var(--accent-ink)",
-        good: "oklch(0.66 0.17 150)",
-        "good-soft": "oklch(0.94 0.06 150)",
-        bad: "oklch(0.62 0.22 25)",
-        "bad-soft": "oklch(0.95 0.05 25)",
-        warn: "oklch(0.78 0.16 75)",
+        good: "var(--good)",
+        "good-soft": "var(--good-soft)",
+        bad: "var(--bad)",
+        "bad-soft": "var(--bad-soft)",
+        warn: "var(--warn)",
+      },
+      borderColor: {
+        // Bare `border` (no color class) flips with the theme instead of
+        // falling back to Tailwind's fixed gray-200.
+        DEFAULT: "var(--border)",
       },
       fontFamily: {
         sans: ["var(--font-heebo)", "ui-sans-serif", "system-ui", "sans-serif"],
       },
       boxShadow: {
-        card: "0 1px 2px oklch(0.5 0.02 250 / 0.05), 0 1px 3px oklch(0.5 0.02 250 / 0.04)",
-        "card-hover": "0 4px 12px oklch(0.5 0.02 250 / 0.08), 0 1px 3px oklch(0.5 0.02 250 / 0.05)",
-        sidebar: "0 1px 2px oklch(0.5 0.02 250 / 0.04)",
+        card: "0 1px 2px var(--shadow-1), 0 1px 3px var(--shadow-2)",
+        "card-hover": "0 4px 12px var(--shadow-3), 0 1px 3px var(--shadow-2)",
+        sidebar: "0 1px 2px var(--shadow-1)",
       },
       borderRadius: {
         "2xl": "1.125rem",

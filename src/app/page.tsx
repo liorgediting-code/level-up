@@ -400,8 +400,8 @@ function buildJourneySummary(j?: { kind: string; status: string; currentStageInd
 
 function JourneyChip({ kind, summary }: { kind: JourneyKind; summary: JourneySummary }) {
   const tone = kind === "organic"
-    ? { ring: "oklch(0.65 0.22 0 / 0.14)", dot: "oklch(0.65 0.22 0)", text: "oklch(0.45 0.22 0)" }
-    : { ring: "oklch(0.58 0.22 295 / 0.14)", dot: "oklch(0.58 0.22 295)", text: "oklch(0.42 0.22 295)" };
+    ? { ring: "oklch(0.65 0.22 0 / 0.14)", dot: "oklch(0.65 0.22 0)", text: "oklch(0.62 0.22 0)" }
+    : { ring: "oklch(0.58 0.22 295 / 0.14)", dot: "oklch(0.58 0.22 295)", text: "oklch(0.6 0.22 295)" };
 
   if (summary.state === "none") {
     return (

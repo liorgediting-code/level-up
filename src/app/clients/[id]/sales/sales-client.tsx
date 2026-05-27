@@ -105,12 +105,12 @@ export default function SalesClient({
               <td className="p-2 text-xs">
                 {m.scheduledAt
                   ? new Date(m.scheduledAt).toLocaleString("he-IL")
-                  : <span className="text-amber-600">— לחץ לתזמון</span>}
+                  : <span className="text-amber-600 dark:text-amber-400">— לחץ לתזמון</span>}
               </td>
               <td className="p-2">{m.title}</td>
               <td className="p-2">
                 {m.scheduledAt === null ? (
-                  <span className="rounded-full border border-amber-400 px-2 py-0.5 text-xs text-amber-700">לא תוזמנה</span>
+                  <span className="rounded-full border border-amber-400 px-2 py-0.5 text-xs text-amber-700 dark:border-amber-500/60 dark:text-amber-300">לא תוזמנה</span>
                 ) : (
                   <span
                     className="rounded-full px-2 py-0.5 text-xs text-white"
@@ -181,7 +181,7 @@ function NewMeetingDialog({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-md rounded-lg bg-white p-5" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-md rounded-lg bg-surface p-5" onClick={(e) => e.stopPropagation()}>
         <h2 className="mb-3 text-lg font-semibold">פגישה חדשה</h2>
         <input className="input mb-2 w-full" placeholder="כותרת" value={title} onChange={(e) => setTitle(e.target.value)} />
         <div className="mb-2 grid grid-cols-2 gap-2">
@@ -291,7 +291,7 @@ function MeetingDrawer({
   return (
     <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose}>
       <aside
-        className="fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl"
+        className="fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -300,7 +300,7 @@ function MeetingDrawer({
         </div>
 
         {showResolve && (
-          <div className="mb-4 rounded-md border border-amber-500 bg-amber-50 p-2 text-xs">
+          <div className="mb-4 rounded-md border border-amber-500 bg-amber-50 p-2 text-xs dark:border-amber-700 dark:bg-amber-950/40">
             פגישה זו כבר עברה. עדכן סטטוס:
             <div className="mt-2 flex gap-1">
               <button onClick={() => quickSet("held")} className="btn-ghost">התקיימה</button>
