@@ -22,7 +22,7 @@ export default async function RecordingPage({ params }: { params: Promise<{ id: 
         chunks: {
           where: { isFinal: true },
           orderBy: [{ startMs: "asc" }, { createdAt: "asc" }],
-          select: { id: true, text: true, startMs: true, speaker: true },
+          select: { id: true, text: true, startMs: true, endMs: true, speaker: true },
         },
       },
     }),
@@ -65,11 +65,13 @@ export default async function RecordingPage({ params }: { params: Promise<{ id: 
         clientId={session.clientId}
         folderId={session.folderId}
         summary={session.summary}
+        summaryKind={session.summaryKind}
+        summaryGeneratedAt={session.summaryGeneratedAt?.toISOString() ?? null}
         transcribeStatus={session.transcribeStatus}
         transcribeError={session.transcribeError}
         clients={clients}
         folders={folders}
-        chunks={session.chunks.map((c) => ({ id: c.id, text: c.text, startMs: c.startMs, speaker: c.speaker }))}
+        chunks={session.chunks.map((c) => ({ id: c.id, text: c.text, startMs: c.startMs, endMs: c.endMs, speaker: c.speaker }))}
         hasMic={hasMic}
         hasTab={hasTab}
         hasLegacy={hasLegacy}

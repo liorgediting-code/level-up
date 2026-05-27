@@ -364,6 +364,10 @@ model TranscriptSession {
   audioMime      String?
   transcribeStatus String  @default("pending") // pending | transcribing | ready | failed
   transcribeError  String?
+  summaryKind         String?
+  summaryJson         Json?
+  summaryGeneratedAt  DateTime?
+  summaryModel        String?
 
   client Client?           @relation(fields: [clientId], references: [id], onDelete: SetNull)
   folder RecordingFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
