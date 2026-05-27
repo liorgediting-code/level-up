@@ -5,6 +5,7 @@
 /* Accent theme — orange by default, switchable to the original blue via
    [data-theme="blue"] on <html> (toggled from Settings, persisted in localStorage). */
 :root {
+  color-scheme: light;
   --accent: oklch(0.62 0.18 50);
   --accent-soft: oklch(0.95 0.045 60);
   --accent-ink: oklch(0.48 0.15 50);
@@ -45,6 +46,7 @@
 
 /* Night mode — dark neutrals/semantics. Composes with the accent axis above. */
 [data-mode="dark"] {
+  color-scheme: dark;
   --bg: oklch(0.17 0.012 250);
   --surface: oklch(0.21 0.014 250);
   --elevated: oklch(0.25 0.016 250);
