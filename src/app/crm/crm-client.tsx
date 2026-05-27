@@ -71,7 +71,7 @@ export default function CrmClient({ lists }: { lists: ListRow[] }) {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={close}>
-          <div className="w-full max-w-md rounded-lg bg-white p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-md rounded-lg bg-surface p-5" onClick={(e) => e.stopPropagation()}>
             {!created ? (
               <>
                 <h2 className="mb-3 text-lg font-semibold">רשימה חדשה</h2>
@@ -97,7 +97,7 @@ export default function CrmClient({ lists }: { lists: ListRow[] }) {
               <>
                 <h2 className="mb-2 text-lg font-semibold">הרשימה נוצרה</h2>
                 <p className="mb-3 text-sm text-muted">העתק את ה-URL הזה והדבק אותו כיעד הוובהוק בדף הנחיתה:</p>
-                <code className="block break-all rounded-md bg-gray-100 p-2 text-xs">
+                <code className="block break-all rounded-md bg-elevated p-2 text-xs">
                   {origin}/api/webhooks/leads/{created.id}?token={created.webhookToken}
                 </code>
                 <div className="mt-4 flex justify-end gap-2">

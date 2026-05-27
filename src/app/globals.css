@@ -11,6 +11,28 @@
   --accent-strong: oklch(0.55 0.18 50);
   --accent-soft-hover: oklch(0.91 0.07 60);
   --accent-ring: oklch(0.62 0.18 50 / 0.2);
+
+  /* Neutrals + semantics — light. Flipped wholesale under [data-mode="dark"]. */
+  --bg: oklch(0.965 0.008 250);
+  --surface: oklch(1 0 0);
+  --elevated: oklch(0.99 0.004 250);
+  --border: oklch(0.92 0.008 250);
+  --border-strong: oklch(0.86 0.012 250);
+  --muted: oklch(0.52 0.02 250);
+  --muted-soft: oklch(0.68 0.015 250);
+  --fg: oklch(0.22 0.02 250);
+  --good: oklch(0.66 0.17 150);
+  --good-soft: oklch(0.94 0.06 150);
+  --bad: oklch(0.62 0.22 25);
+  --bad-soft: oklch(0.95 0.05 25);
+  --warn: oklch(0.78 0.16 75);
+
+  /* Surface-derived helpers that aren't Tailwind tokens. */
+  --row-hover: oklch(0.985 0.005 250);
+  --nav-hover: oklch(0.96 0.008 250);
+  --shadow-1: oklch(0.5 0.02 250 / 0.05);
+  --shadow-2: oklch(0.5 0.02 250 / 0.04);
+  --shadow-3: oklch(0.5 0.02 250 / 0.08);
 }
 [data-theme="blue"] {
   --accent: oklch(0.56 0.22 258);
@@ -21,10 +43,52 @@
   --accent-ring: oklch(0.56 0.22 258 / 0.18);
 }
 
+/* Night mode — dark neutrals/semantics. Composes with the accent axis above. */
+[data-mode="dark"] {
+  --bg: oklch(0.17 0.012 250);
+  --surface: oklch(0.21 0.014 250);
+  --elevated: oklch(0.25 0.016 250);
+  --border: oklch(0.30 0.014 250);
+  --border-strong: oklch(0.38 0.016 250);
+  --muted: oklch(0.66 0.02 250);
+  --muted-soft: oklch(0.52 0.018 250);
+  --fg: oklch(0.93 0.01 250);
+  --good: oklch(0.80 0.15 150);
+  --good-soft: oklch(0.30 0.06 150);
+  --bad: oklch(0.76 0.18 25);
+  --bad-soft: oklch(0.30 0.08 25);
+  --warn: oklch(0.82 0.15 75);
+
+  --row-hover: oklch(0.25 0.016 250);
+  --nav-hover: oklch(0.27 0.016 250);
+  --shadow-1: oklch(0 0 0 / 0.30);
+  --shadow-2: oklch(0 0 0 / 0.24);
+  --shadow-3: oklch(0 0 0 / 0.40);
+}
+/* Dark accents: keep the solid --accent near its light lightness so white text
+   on buttons / active nav / logo stays readable; soft+ink are lifted for use as
+   tinted backgrounds and accent-on-dark text. */
+[data-mode="dark"] {
+  --accent: oklch(0.62 0.18 50);
+  --accent-soft: oklch(0.33 0.08 55);
+  --accent-ink: oklch(0.84 0.12 60);
+  --accent-strong: oklch(0.56 0.18 50);
+  --accent-soft-hover: oklch(0.38 0.09 55);
+  --accent-ring: oklch(0.62 0.18 50 / 0.3);
+}
+[data-mode="dark"][data-theme="blue"] {
+  --accent: oklch(0.58 0.21 258);
+  --accent-soft: oklch(0.33 0.1 258);
+  --accent-ink: oklch(0.84 0.12 258);
+  --accent-strong: oklch(0.52 0.21 258);
+  --accent-soft-hover: oklch(0.38 0.11 258);
+  --accent-ring: oklch(0.58 0.21 258 / 0.3);
+}
+
 html, body { height: 100%; }
 body {
-  background: oklch(0.965 0.008 250);
-  color: oklch(0.22 0.02 250);
+  background: var(--bg);
+  color: var(--fg);
   font-family: var(--font-heebo), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: "cv11", "ss01", "tnum" 0;
   -webkit-font-smoothing: antialiased;
@@ -53,7 +117,7 @@ body {
   @apply px-4 py-3 text-right text-[11px] font-medium uppercase tracking-[0.08em] text-muted;
 }
 .table-td { @apply px-4 py-3 text-sm border-t border-border; }
-tbody tr:hover > .table-td { background: oklch(0.985 0.005 250); }
+tbody tr:hover > .table-td { background: var(--row-hover); }
 
 .pill { @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium; }
 .pill-good { @apply pill bg-good-soft text-good; }
@@ -65,7 +129,7 @@ tbody tr:hover > .table-td { background: oklch(0.985 0.005 250); }
 .nav-item {
   @apply flex items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium text-muted transition-colors;
 }
-.nav-item:hover { background: oklch(0.96 0.008 250); color: oklch(0.22 0.02 250); }
+.nav-item:hover { background: var(--nav-hover); color: var(--fg); }
 .nav-item-active {
   background: var(--accent);
   color: oklch(1 0 0);

@@ -57,7 +57,7 @@ export default function ListSettingsClient(props: {
 
       <section className="mb-6">
         <h2 className="mb-2 text-sm font-semibold">Webhook</h2>
-        <code className="block break-all rounded-md bg-gray-100 p-2 text-xs">{webhookUrl}</code>
+        <code className="block break-all rounded-md bg-elevated p-2 text-xs">{webhookUrl}</code>
         <div className="mt-2 flex gap-2">
           <button onClick={() => navigator.clipboard.writeText(webhookUrl)} className="rounded-md border px-3 py-1 text-sm">העתק</button>
           <button onClick={rotate} className="rounded-md border px-3 py-1 text-sm">החלף טוקן</button>
@@ -131,7 +131,7 @@ export function StatusEditor({
               defaultValue={s.name}
               disabled={!editable}
               onBlur={(e)=>e.target.value!==s.name && patch(s.id, { name: e.target.value })}
-              className="flex-1 rounded-md border px-2 py-1 text-sm disabled:bg-gray-50"
+              className="flex-1 rounded-md border px-2 py-1 text-sm disabled:bg-elevated"
             />
             <label className="flex items-center gap-1 text-xs">
               <input type="radio" name={`def-${scope.listId ?? "g"}`} disabled={!editable} checked={s.isDefault} onChange={() => patch(s.id, { isDefault: true })} />

@@ -176,7 +176,7 @@ function LeadDrawer({
   return (
     <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose}>
       <aside
-        className="fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl"
+        className="fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
@@ -201,7 +201,7 @@ function LeadDrawer({
         {Object.keys(lead.customFields).length > 0 && (
           <div className="mb-4">
             <div className="mb-1 text-xs font-medium text-muted">שדות נוספים</div>
-            <div className="rounded-md bg-gray-50 p-2 text-xs">
+            <div className="rounded-md bg-elevated p-2 text-xs">
               {Object.entries(lead.customFields).map(([k, v]) => (
                 <div key={k}><span className="text-muted">{k}: </span>{String(v)}</div>
               ))}
@@ -232,7 +232,7 @@ function LeadDrawer({
 
         <div className="mb-4">
           {lead.convertedClientId ? (
-            <Link href={`/clients/${lead.convertedClientId}`} className="block rounded-md bg-green-100 px-3 py-2 text-sm">
+            <Link href={`/clients/${lead.convertedClientId}`} className="block rounded-md bg-green-100 px-3 py-2 text-sm dark:bg-green-950/50 dark:text-green-300">
               הומר ללקוח →
             </Link>
           ) : converting ? (
@@ -255,7 +255,7 @@ function LeadDrawer({
           <div className="mb-2 text-xs font-medium text-muted">היסטוריה</div>
           <ul className="space-y-1 text-xs">
             {lead.activities.map((a) => (
-              <li key={a.id} className="rounded bg-gray-50 px-2 py-1">
+              <li key={a.id} className="rounded bg-elevated px-2 py-1">
                 <span className="font-medium">{labelForActivity(a.type)}</span>
                 <span className="text-muted"> · {new Date(a.createdAt).toLocaleString("he-IL")}</span>
               </li>
@@ -323,7 +323,7 @@ function DeleteLeadButton({
     <button
       onClick={del}
       disabled={busy}
-      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50"
+      className="rounded-md border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
     >
       מחק
     </button>

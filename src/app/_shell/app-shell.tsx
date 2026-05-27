@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import NotesPanel from "@/components/notes-panel";
 
 const NAV = [
@@ -22,6 +23,25 @@ export default function AppShell({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    // Sync to the attribute set pre-paint by the layout FOUC script.
+    setDark(document.documentElement.getAttribute("data-mode") === "dark");
+  }, []);
+  function toggleDark() {
+    const next = !dark;
+    const root = document.documentElement;
+    if (next) {
+      root.setAttribute("data-mode", "dark");
+      try { localStorage.setItem("astral-mode", "dark"); } catch {}
+    } else {
+      root.removeAttribute("data-mode");
+      try { localStorage.removeItem("astral-mode"); } catch {}
+    }
+    setDark(next);
+  }
+
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
@@ -81,6 +101,16 @@ export default function AppShell({
             סנכרנו את נתוני מטא מדף הקמפיינים כדי לראות מדדים מעודכנים.
           </div>
         </div>
+
+        <button
+          onClick={toggleDark}
+          title={dark ? "מצב יום" : "מצב לילה"}
+          aria-label={dark ? "עבור למצב יום" : "עבור למצב לילה"}
+          className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-border px-3 py-2 text-sm font-medium text-muted transition-colors hover:border-border-strong hover:bg-elevated hover:text-fg"
+        >
+          {dark ? <SunIcon className="h-[18px] w-[18px]" /> : <MoonIcon className="h-[18px] w-[18px]" />}
+          <span>{dark ? "מצב יום" : "מצב לילה"}</span>
+        </button>
       </aside>
 
       <main className="min-w-0 flex-1">
@@ -92,6 +122,21 @@ export default function AppShell({
   );
 }
 
+function MoonIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
+    </svg>
+  );
+}
+function SunIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" />
+    </svg>
+  );
+}
 function FunnelIcon(p: React.SVGProps<SVGSVGElement>) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>

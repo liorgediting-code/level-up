@@ -25,12 +25,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="he" dir="rtl" className={heebo.variable}>
+    <html lang="he" dir="rtl" className={heebo.variable} suppressHydrationWarning>
       <head>
-        {/* Apply saved accent theme before paint to avoid a color flash. */}
+        {/* Apply saved accent theme + night mode before paint to avoid a flash. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `try{if(localStorage.getItem('astral-theme')==='blue')document.documentElement.setAttribute('data-theme','blue')}catch(e){}`,
+            __html: `try{var d=document.documentElement;if(localStorage.getItem('astral-theme')==='blue')d.setAttribute('data-theme','blue');if(localStorage.getItem('astral-mode')==='dark')d.setAttribute('data-mode','dark')}catch(e){}`,
           }}
         />
       </head>

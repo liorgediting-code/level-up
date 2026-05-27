@@ -179,7 +179,7 @@ function TaskDrawer({
   return (
     <div className="fixed inset-0 z-50 bg-black/40" onClick={onClose}>
       <aside
-        className="fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-white p-5 shadow-xl"
+        className="fixed right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-surface p-5 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">

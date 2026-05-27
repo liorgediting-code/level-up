@@ -71,7 +71,7 @@ export default function NewClientForm() {
 
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={close}>
-          <div className="w-full max-w-lg rounded-lg bg-white p-5" onClick={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-lg bg-surface p-5" onClick={(e) => e.stopPropagation()}>
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">לקוח חדש — שלב {step} מתוך 2</h2>
               <button onClick={close} className="text-sm text-muted">סגור</button>
