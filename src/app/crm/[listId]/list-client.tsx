@@ -179,8 +179,15 @@ function AddLeadModal({
     });
     setBusy(false);
     if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      setError(j.error || "יצירה נכשלה");
+      const text = await res.text().catch(() => "");
+      let detail = "";
+      try {
+        const j = JSON.parse(text);
+        detail = typeof j?.error === "string" ? j.error : JSON.stringify(j);
+      } catch {
+        detail = text.slice(0, 200);
+      }
+      setError(`יצירה נכשלה (${res.status}): ${detail || "אין פרטים"}`);
       return;
     }
     onCreated();
