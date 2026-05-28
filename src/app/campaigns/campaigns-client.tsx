@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type Camp = { id: string; name: string; status: string | null; objective: string | null; isAgencyOwned: boolean; clientIds: string[] };
+type Camp = { id: string; name: string; status: string | null; objective: string | null; isAgencyOwned: boolean; kind: string | null; clientIds: string[] };
 type Cli = { id: string; name: string };
 
 export default function CampaignsClient({ campaigns, clients }: { campaigns: Camp[]; clients: Cli[] }) {
@@ -40,6 +40,15 @@ export default function CampaignsClient({ campaigns, clients }: { campaigns: Cam
     if (!r.ok) alert("עדכון נכשל");
     router.refresh();
   }
+  async function setKind(campaignId: string, kind: string) {
+    const r = await fetch(`/api/campaigns/${campaignId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: kind === "" ? null : kind }),
+    });
+    if (!r.ok) alert("עדכון נכשל");
+    router.refresh();
+  }
 
   const filtered = campaigns.filter((c) => c.name.toLowerCase().includes(q.toLowerCase()));
 
@@ -60,6 +69,7 @@ export default function CampaignsClient({ campaigns, clients }: { campaigns: Cam
               <th className="table-th">שלנו</th>
               <th className="table-th">סטטוס</th>
               <th className="table-th">מטרה</th>
+              <th className="table-th">סוג</th>
               <th className="table-th">לקוחות מחוברים</th>
               <th className="table-th">חבר ל…</th>
             </tr>
@@ -81,6 +91,17 @@ export default function CampaignsClient({ campaigns, clients }: { campaigns: Cam
                 </td>
                 <td className="table-td">{c.status ?? "—"}</td>
                 <td className="table-td">{c.objective ?? "—"}</td>
+                <td className="table-td">
+                  <select
+                    className="input py-1 text-xs"
+                    value={c.kind ?? ""}
+                    onChange={(e) => setKind(c.id, e.target.value)}
+                  >
+                    <option value="">קמפיין</option>
+                    <option value="cta">קמפיין CTA</option>
+                    <option value="boost">הקפצה</option>
+                  </select>
+                </td>
                 <td className="table-td">
                   {c.clientIds.length ? (
                     <div className="flex flex-wrap gap-1">
@@ -106,7 +127,7 @@ export default function CampaignsClient({ campaigns, clients }: { campaigns: Cam
                 </td>
               </tr>
             ))}
-            {!filtered.length && <tr><td className="table-td text-muted" colSpan={6}>אין קמפיינים. לחצו על &quot;סנכרן ממטא&quot;.</td></tr>}
+            {!filtered.length && <tr><td className="table-td text-muted" colSpan={7}>אין קמפיינים. לחצו על &quot;סנכרן ממטא&quot;.</td></tr>}
           </tbody>
         </table>
       </div>

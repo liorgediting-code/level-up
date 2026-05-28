@@ -25,7 +25,7 @@ export async function aggregateForCampaignIds(ids: string[], range: RangeKey = "
 }
 
 async function aggregateForCampaigns(
-  attachedCampaigns: { id: string; name: string; status: string | null; objective: string | null }[],
+  attachedCampaigns: { id: string; name: string; status: string | null; objective: string | null; kind: string | null }[],
   range: RangeKey
 ) {
   const since = rangeStart(range);
@@ -86,5 +86,5 @@ function empty() {
 }
 
 export type PerCampaign = ReturnType<typeof empty> & {
-  campaign: { id: string; name: string; status: string | null; objective: string | null };
+  campaign: { id: string; name: string; status: string | null; objective: string | null; kind: string | null };
 };

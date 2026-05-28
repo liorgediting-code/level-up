@@ -14,8 +14,8 @@ export default async function MarketingCampaignsPage({ params }: { params: Promi
   ]);
   if (!client) return null;
   const attached = client.campaigns.map((cc) => ({
-    id: cc.campaign.id, name: cc.campaign.name, status: cc.campaign.status, objective: cc.campaign.objective,
+    id: cc.campaign.id, name: cc.campaign.name, status: cc.campaign.status, objective: cc.campaign.objective, kind: cc.campaign.kind,
   }));
-  const allRows = all.map((c) => ({ id: c.id, name: c.name, status: c.status, objective: c.objective }));
+  const allRows = all.map((c) => ({ id: c.id, name: c.name, status: c.status, objective: c.objective, kind: c.kind }));
   return <CampaignsClient clientId={id} attached={attached} all={allRows} />;
 }

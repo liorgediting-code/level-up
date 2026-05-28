@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-type Camp = { id: string; name: string; status: string | null; objective: string | null };
+type Camp = { id: string; name: string; status: string | null; objective: string | null; kind: string | null };
 
 export default function CampaignsClient(props: { clientId: string; attached: Camp[]; all: Camp[] }) {
   const router = useRouter();
@@ -24,6 +24,14 @@ export default function CampaignsClient(props: { clientId: string; attached: Cam
     await fetch(`/api/clients/${props.clientId}/campaigns?campaignId=${campaignId}`, { method: "DELETE" });
     router.refresh();
   }
+  async function setKind(campaignId: string, kind: string) {
+    await fetch(`/api/clients/${props.clientId}/campaigns`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ campaignId, kind: kind === "" ? null : kind }),
+    });
+    router.refresh();
+  }
 
   return (
     <div className="card">
@@ -32,7 +40,18 @@ export default function CampaignsClient(props: { clientId: string; attached: Cam
         {props.attached.map((c) => (
           <li key={c.id} className="flex items-center justify-between gap-2">
             <span>{c.name} <span className="text-xs text-muted">{c.objective ?? ""}</span></span>
-            <button onClick={() => detach(c.id)} className="text-xs text-muted hover:text-bad">נתק</button>
+            <div className="flex items-center gap-2">
+              <select
+                className="input py-1 text-xs"
+                value={c.kind ?? ""}
+                onChange={(e) => setKind(c.id, e.target.value)}
+              >
+                <option value="">קמפיין (ברירת מחדל)</option>
+                <option value="cta">קמפיין CTA</option>
+                <option value="boost">הקפצה</option>
+              </select>
+              <button onClick={() => detach(c.id)} className="text-xs text-muted hover:text-bad">נתק</button>
+            </div>
           </li>
         ))}
         {!props.attached.length && (

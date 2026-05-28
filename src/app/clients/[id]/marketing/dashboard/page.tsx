@@ -4,8 +4,69 @@ import { prisma } from "@/lib/db";
 import { aggregateForClient, type RangeKey } from "@/lib/meta/aggregate";
 import { fmtInt, fmtPct, fmtIls } from "@/lib/utils";
 import { StatCard } from "@/app/_shell/stat-card";
+import type { PerCampaign } from "@/lib/meta/aggregate";
 
 export const dynamic = "force-dynamic";
+
+function CampaignTable({ clientId, title, rows }: { clientId: string; title: string; rows: PerCampaign[] }) {
+  return (
+    <div className="card overflow-hidden p-0">
+      <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div>
+          <div className="text-base font-semibold">{title}</div>
+          <div className="text-xs text-muted">{rows.length} קמפיינים פעילים בטווח</div>
+        </div>
+        <Link href={`/clients/${clientId}/marketing/campaigns`} className="text-sm font-medium text-accent hover:text-accent-ink">
+          ניהול קמפיינים →
+        </Link>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="bg-elevated">
+            <tr>
+              <th className="table-th">קמפיין</th>
+              <th className="table-th">הוצאה</th>
+              <th className="table-th">חשיפות</th>
+              <th className="table-th">CTR</th>
+              <th className="table-th">CPM</th>
+              <th className="table-th">לידים</th>
+              <th className="table-th">עלות/ליד</th>
+              <th className="table-th">המרות</th>
+              <th className="table-th">עלות/המרה</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((c) => (
+              <tr key={c.campaign.id}>
+                <td className="table-td">
+                  <div className="font-medium">{c.campaign.name}</div>
+                  {c.campaign.objective && (
+                    <div className="text-xs text-muted">{c.campaign.objective}</div>
+                  )}
+                </td>
+                <td className="table-td num">{fmtIls(c.spend)}</td>
+                <td className="table-td num">{fmtInt(c.impressions)}</td>
+                <td className="table-td num">{fmtPct(c.ctr)}</td>
+                <td className="table-td num">{fmtIls(c.cpm)}</td>
+                <td className="table-td num">{fmtInt(c.leads)}</td>
+                <td className="table-td num">{fmtIls(c.costPerLead)}</td>
+                <td className="table-td num">{fmtInt(c.conversions)}</td>
+                <td className="table-td num">{fmtIls(c.costPerConversion)}</td>
+              </tr>
+            ))}
+            {!rows.length && (
+              <tr>
+                <td className="table-td text-muted" colSpan={9}>
+                  אין קמפיינים בקבוצה זו.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
 
 export default async function ClientDashboard({
   params,
@@ -65,61 +126,27 @@ export default async function ClientDashboard({
         <StatCard tone="blue"   label="יתרה"      value={fmtIls(outstanding)} />
       </div>
 
-      <div className="card overflow-hidden p-0">
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <div>
-            <div className="text-base font-semibold">פירוט לפי קמפיין</div>
-            <div className="text-xs text-muted">{agg.perCampaign.length} קמפיינים פעילים בטווח</div>
-          </div>
-          <Link href={`/clients/${id}/marketing/campaigns`} className="text-sm font-medium text-accent hover:text-accent-ink">
-            ניהול קמפיינים →
+      {!agg.perCampaign.length ? (
+        <div className="card text-sm text-muted">
+          לא חוברו קמפיינים.{" "}
+          <Link href={`/clients/${id}/marketing/campaigns`} className="font-medium text-accent hover:text-accent-ink">
+            עבור לדף הקמפיינים כדי לחבר ←
           </Link>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-elevated">
-              <tr>
-                <th className="table-th">קמפיין</th>
-                <th className="table-th">הוצאה</th>
-                <th className="table-th">חשיפות</th>
-                <th className="table-th">CTR</th>
-                <th className="table-th">CPM</th>
-                <th className="table-th">לידים</th>
-                <th className="table-th">עלות/ליד</th>
-                <th className="table-th">המרות</th>
-                <th className="table-th">עלות/המרה</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agg.perCampaign.map((c) => (
-                <tr key={c.campaign.id}>
-                  <td className="table-td">
-                    <div className="font-medium">{c.campaign.name}</div>
-                    {c.campaign.objective && (
-                      <div className="text-xs text-muted">{c.campaign.objective}</div>
-                    )}
-                  </td>
-                  <td className="table-td num">{fmtIls(c.spend)}</td>
-                  <td className="table-td num">{fmtInt(c.impressions)}</td>
-                  <td className="table-td num">{fmtPct(c.ctr)}</td>
-                  <td className="table-td num">{fmtIls(c.cpm)}</td>
-                  <td className="table-td num">{fmtInt(c.leads)}</td>
-                  <td className="table-td num">{fmtIls(c.costPerLead)}</td>
-                  <td className="table-td num">{fmtInt(c.conversions)}</td>
-                  <td className="table-td num">{fmtIls(c.costPerConversion)}</td>
-                </tr>
-              ))}
-              {!agg.perCampaign.length && (
-                <tr>
-                  <td className="table-td text-muted" colSpan={9}>
-                    לא חוברו קמפיינים. עבור לדף הקמפיינים כדי לחבר.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      ) : (
+        <>
+          <CampaignTable
+            clientId={id}
+            title="קמפיינים"
+            rows={agg.perCampaign.filter((c) => c.campaign.kind !== "boost")}
+          />
+          <CampaignTable
+            clientId={id}
+            title="הקפצות"
+            rows={agg.perCampaign.filter((c) => c.campaign.kind === "boost")}
+          />
+        </>
+      )}
     </div>
   );
 }

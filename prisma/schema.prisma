@@ -108,6 +108,7 @@ model Campaign {
   name          String
   status        String?
   objective     String?
+  kind          String?  // "boost" | "cta" — how it appears in the dashboard split (null = untagged → shown as CTA)
   lastSyncedAt  DateTime @default(now())
   isAgencyOwned Boolean  @default(false)
 

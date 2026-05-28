@@ -21,6 +21,7 @@ export default async function CampaignsPage() {
     status: c.status,
     objective: c.objective,
     isAgencyOwned: c.isAgencyOwned,
+    kind: c.kind,
     clientIds: byCampaign.get(c.id) ?? [],
   }));
   return (
