@@ -19,7 +19,8 @@ export type ParsedLead = {
 };
 
 export function parseWebhookPayload(raw: unknown): { ok: true; data: ParsedLead } | { ok: false; error: string } {
-  const parsed = BasePayload.safeParse(raw);
+  const normalized = isTypeformPayload(raw) ? normalizeTypeform(raw) : raw;
+  const parsed = BasePayload.safeParse(normalized);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues.map((i) => `${i.path.join(".") || "(root)"}: ${i.message}`).join("; ") };
   }
@@ -73,4 +74,95 @@ export async function readWebhookBody(req: Request, maxBytes: number): Promise<u
     try { return JSON.parse(text); } catch { return {}; }
   }
   try { return JSON.parse(text); } catch { return {}; }
+}
+
+// ---------- Typeform adapter ----------
+
+type TypeformField = { id?: string; ref?: string; title?: string; type?: string };
+type TypeformAnswer = {
+  type?: string;
+  field?: TypeformField;
+  text?: string;
+  email?: string;
+  phone_number?: string;
+  number?: number;
+  boolean?: boolean;
+  date?: string;
+  url?: string;
+  choice?: { label?: string; other?: string };
+  choices?: { labels?: string[]; other?: string };
+};
+
+function isTypeformPayload(raw: unknown): raw is { form_response: { answers?: TypeformAnswer[]; definition?: { fields?: TypeformField[] } } } {
+  if (!raw || typeof raw !== "object") return false;
+  const fr = (raw as Record<string, unknown>).form_response;
+  return !!fr && typeof fr === "object" && Array.isArray((fr as Record<string, unknown>).answers);
+}
+
+function answerValue(a: TypeformAnswer): unknown {
+  switch (a.type) {
+    case "text":
+    case "short_text":
+    case "long_text": return a.text;
+    case "email": return a.email;
+    case "phone_number": return a.phone_number;
+    case "number": return a.number;
+    case "boolean": return a.boolean;
+    case "date": return a.date;
+    case "url": return a.url;
+    case "choice": return a.choice?.label ?? a.choice?.other;
+    case "choices": return a.choices?.labels?.join(", ") ?? a.choices?.other;
+    default:
+      return a.text ?? a.phone_number ?? a.email ?? a.number ?? a.boolean ?? a.date ?? a.url
+        ?? a.choice?.label ?? a.choices?.labels?.join(", ");
+  }
+}
+
+function normalizeTypeform(raw: { form_response: { answers?: TypeformAnswer[]; definition?: { fields?: TypeformField[] } } }): Record<string, unknown> {
+  const fr = raw.form_response;
+  const fieldsById = new Map<string, TypeformField>();
+  for (const f of fr.definition?.fields ?? []) {
+    if (f.id) fieldsById.set(f.id, f);
+  }
+
+  const answers = fr.answers ?? [];
+  const out: Record<string, unknown> = {};
+
+  let phone: string | null = null;
+  let email: string | null = null;
+  let name: string | null = null;
+  let firstShortText: string | null = null;
+
+  for (const a of answers) {
+    const def = (a.field?.id && fieldsById.get(a.field.id)) || a.field || {};
+    const title = (def.title ?? "").trim();
+    const val = answerValue(a);
+    if (val === undefined || val === null || val === "") continue;
+
+    if (a.type === "phone_number" && !phone) {
+      phone = String(val);
+      continue;
+    }
+    if (a.type === "email" && !email) {
+      email = String(val);
+      continue;
+    }
+
+    const isShortText = a.type === "short_text" || a.type === "text";
+    if (isShortText && firstShortText === null) firstShortText = String(val);
+    if (!name && isShortText && /שם|name/i.test(title)) {
+      name = String(val);
+      continue;
+    }
+
+    const key = title || a.field?.ref || a.field?.id || `field_${Object.keys(out).length + 1}`;
+    out[key] = val;
+  }
+
+  if (!name && firstShortText) name = firstShortText;
+  if (name) out.name = name;
+  if (phone) out.phone = phone;
+  if (email) out.email = email;
+
+  return out;
 }
