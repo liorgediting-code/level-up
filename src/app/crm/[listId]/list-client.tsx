@@ -23,6 +23,7 @@ export default function ListClient(props: {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState<string | null>(search.get("lead"));
+  const [adding, setAdding] = useState(false);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -52,9 +53,17 @@ export default function ListClient(props: {
           <Link href="/crm" className="text-xs text-muted hover:underline">← חזרה ל-CRM</Link>
           <h1 className="text-2xl font-semibold">{props.list.name}</h1>
         </div>
-        <Link href={`/crm/${props.list.id}/settings`} className="rounded-md border px-3 py-1.5 text-sm">
-          הגדרות רשימה
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setAdding(true)}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+          >
+            + הוסף ליד
+          </button>
+          <Link href={`/crm/${props.list.id}/settings`} className="rounded-md border px-3 py-1.5 text-sm">
+            הגדרות רשימה
+          </Link>
+        </div>
       </header>
 
       <div className="mb-3 flex gap-2">
@@ -130,6 +139,115 @@ export default function ListClient(props: {
           onChanged={() => router.refresh()}
         />
       )}
+
+      {adding && (
+        <AddLeadModal
+          listId={props.list.id}
+          onClose={() => setAdding(false)}
+          onCreated={() => { setAdding(false); router.refresh(); }}
+        />
+      )}
+    </div>
+  );
+}
+
+function AddLeadModal({
+  listId, onClose, onCreated,
+}: { listId: string; onClose: () => void; onCreated: () => void }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!name.trim()) { setError("שם חובה"); return; }
+    setBusy(true);
+    setError(null);
+    const res = await fetch(`/api/crm/leads`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        listId,
+        name: name.trim(),
+        phone: phone.trim() || null,
+        email: email.trim() || null,
+        notes: notes.trim(),
+      }),
+    });
+    setBusy(false);
+    if (!res.ok) {
+      const j = await res.json().catch(() => ({}));
+      setError(j.error || "יצירה נכשלה");
+      return;
+    }
+    onCreated();
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <form
+        onSubmit={submit}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-lg bg-surface p-5 shadow-xl"
+      >
+        <h2 className="mb-3 text-lg font-semibold">הוספת ליד חדש</h2>
+
+        <label className="mb-3 block">
+          <span className="mb-1 block text-xs font-medium text-muted">שם *</span>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-md border px-2 py-1.5 text-sm"
+          />
+        </label>
+
+        <label className="mb-3 block">
+          <span className="mb-1 block text-xs font-medium text-muted">טלפון</span>
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full rounded-md border px-2 py-1.5 text-sm"
+            dir="ltr"
+          />
+        </label>
+
+        <label className="mb-3 block">
+          <span className="mb-1 block text-xs font-medium text-muted">אימייל</span>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="w-full rounded-md border px-2 py-1.5 text-sm"
+            dir="ltr"
+          />
+        </label>
+
+        <label className="mb-3 block">
+          <span className="mb-1 block text-xs font-medium text-muted">הערות</span>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            className="h-20 w-full rounded-md border px-2 py-1.5 text-sm"
+          />
+        </label>
+
+        {error && <div className="mb-3 rounded-md bg-red-50 px-3 py-2 text-xs text-red-700 dark:bg-red-950/40 dark:text-red-300">{error}</div>}
+
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={onClose} className="rounded-md border px-3 py-1.5 text-sm">ביטול</button>
+          <button
+            type="submit"
+            disabled={busy}
+            className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+          >
+            {busy ? "שומר…" : "הוסף"}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }
