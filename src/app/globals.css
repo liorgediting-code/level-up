@@ -105,8 +105,8 @@ body {
    in night mode and renders text barely visible. Give every input/select/
    textarea the theme surface + foreground so bare-styled controls (search box,
    status filter, add-lead form, notes) flip with the theme. Any explicit
-   Tailwind bg-*/text-* utility still wins on specificity. Lives in @layer base
-   so component/utility classes override it. */
+   Tailwind bg or text color utility still wins on specificity. Lives in
+   @layer base so component/utility classes override it. */
 @layer base {
   input,
   select,
