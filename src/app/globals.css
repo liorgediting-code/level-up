@@ -101,6 +101,22 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Native form controls default to a white field background, which stays white
+   in night mode and renders text barely visible. Give every input/select/
+   textarea the theme surface + foreground so bare-styled controls (search box,
+   status filter, add-lead form, notes) flip with the theme. Any explicit
+   Tailwind bg-*/text-* utility still wins on specificity. Lives in @layer base
+   so component/utility classes override it. */
+@layer base {
+  input,
+  select,
+  textarea {
+    background-color: var(--surface);
+    color: var(--fg);
+  }
+  ::placeholder { color: var(--muted-soft); }
+}
+
 /* Tabular numbers wherever we render metrics. */
 .num { font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
