@@ -3,7 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/db";
 
 const Body = z.object({
-  type: z.enum(["closed", "paid", "owed"]),
+  type: z.enum(["closed", "paid", "owed", "expense", "lior_paid"]),
   amount: z.number().finite(),
   currency: z.string().default("ILS"),
   note: z.string().optional(),
