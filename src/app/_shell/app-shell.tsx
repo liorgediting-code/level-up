@@ -11,6 +11,7 @@ const NAV = [
   { href: "/funnels", label: "משפכים", icon: FunnelIcon },
   { href: "/sales", label: "מכירות", icon: MicIcon },
   { href: "/campaigns", label: "קמפיינים", icon: MegaphoneIcon },
+  { href: "/team", label: "צוות", icon: PeopleIcon },
   { href: "/crm", label: "CRM", icon: InboxIcon, badgeKey: "unread" as const },
   { href: "/settings", label: "הגדרות", icon: GearIcon },
 ];
@@ -94,13 +95,6 @@ export default function AppShell({
             );
           })}
         </nav>
-
-        <div className="mt-4 rounded-2xl bg-accent-soft p-4 text-accent-ink">
-          <div className="text-[11px] font-medium uppercase tracking-[0.08em]">טיפ</div>
-          <div className="mt-1 text-sm leading-snug">
-            סנכרנו את נתוני מטא מדף הקמפיינים כדי לראות מדדים מעודכנים.
-          </div>
-        </div>
 
         <button
           onClick={toggleDark}
@@ -203,6 +197,16 @@ function GearIcon(p: React.SVGProps<SVGSVGElement>) {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
       <circle cx="12" cy="12" r="3" />
       <path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2.1-1.2L14 3h-4l-.5 2.6a7 7 0 0 0-2.1 1.2L5.1 6 3.1 9.3l2 1.5A7 7 0 0 0 5 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2.1 1.2L10 21h4l.5-2.6a7 7 0 0 0 2.1-1.2l2.3.9 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z" />
+    </svg>
+  );
+}
+function PeopleIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <circle cx="9" cy="7" r="3" />
+      <path d="M3 19c.5-2.5 3-4 6-4s5.5 1.5 6 4" />
+      <circle cx="17" cy="8" r="2.5" />
+      <path d="M20 19c-.3-1.8-1.8-3-4-3" />
     </svg>
   );
 }
