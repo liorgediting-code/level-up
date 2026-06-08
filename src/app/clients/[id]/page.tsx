@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { fmtIls, publicUrlForUpload } from "./helpers";
+import { summarizeClientFinance } from "@/lib/finance";
 import ClientPortfolio from "./portfolio-client";
 import { StatCard } from "@/app/_shell/stat-card";
 import MetricsTable, { type Column, type Row } from "@/components/metrics-table";
@@ -64,10 +65,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     },
   });
 
-  const closed = client.payments.filter((p) => p.type === "closed").reduce((s, p) => s + p.amount, 0);
-  const paid = client.payments.filter((p) => p.type === "paid").reduce((s, p) => s + p.amount, 0);
-  const owed = client.payments.filter((p) => p.type === "owed").reduce((s, p) => s + p.amount, 0);
-  const outstanding = closed - paid;
+  const fin = summarizeClientFinance(
+    client.payments,
+    client.liorRevenueSharePct,
+    client.liorExpenseSharePct,
+  );
 
   const lps = client.landingPages.map((lp) => ({
     ...lp,
@@ -77,17 +79,21 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
   return (
     <div className="space-y-8">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard tone="green" label="נסגר" value={fmtIls(closed)} />
-        <StatCard tone="blue"  label="שולם" value={fmtIls(paid)} />
-        <StatCard tone="red"   label="יתרה לתשלום" value={fmtIls(outstanding)} />
-        <StatCard tone="amber" label="הצעה" value={fmtIls(owed)} sub="ממתינה לסגירה" />
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+        <StatCard tone="green" label="נסגר" value={fmtIls(fin.closed)} />
+        <StatCard tone="blue"  label="שולם" value={fmtIls(fin.paid)} />
+        <StatCard tone="red"   label="יתרה לתשלום" value={fmtIls(fin.outstanding)} />
+        <StatCard tone="amber" label="הוצאות" value={fmtIls(fin.expenses)} sub="כמה הוצאנו על הלקוח" />
+        <StatCard tone="amber" label="הצעה" value={fmtIls(fin.owed)} sub="ממתינה לסגירה" />
+        <StatCard tone="red"   label="לתשלום לליאור" value={fmtIls(fin.liorToPay)} sub={`שולם ${fmtIls(fin.liorPaid)}`} />
       </div>
 
       <ClientPortfolio
         clientId={client.id}
         description={client.description}
         links={client.links}
+        liorRevenueSharePct={client.liorRevenueSharePct}
+        liorExpenseSharePct={client.liorExpenseSharePct}
         payments={client.payments.map((p) => ({ ...p, occurredAt: p.occurredAt.toISOString() }))}
         landingPages={lps}
         analysisRuns={client.analysisRuns.map((r) => ({

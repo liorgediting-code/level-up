@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import NewClientForm from "./new-client-form";
 import ClientRowActions from "./client-row-actions";
 import { fmtIls } from "@/lib/utils";
+import { summarizeClientFinance } from "@/lib/finance";
 
 export const dynamic = "force-dynamic";
 
@@ -50,15 +51,15 @@ export default async function ClientsPage({
               <th className="table-th">קמפיינים</th>
               <th className="table-th">דפי נחיתה</th>
               <th className="table-th">יתרה לתשלום</th>
+              <th className="table-th">הוצאות</th>
+              <th className="table-th">לתשלום לליאור</th>
               {view === "past" && <th className="table-th">תאריך סיום</th>}
               <th className="table-th text-left"></th>
             </tr>
           </thead>
           <tbody>
             {clients.map((c) => {
-              const closed = c.payments.filter((p) => p.type === "closed").reduce((s, p) => s + p.amount, 0);
-              const paid = c.payments.filter((p) => p.type === "paid").reduce((s, p) => s + p.amount, 0);
-              const outstanding = closed - paid;
+              const fin = summarizeClientFinance(c.payments, c.liorRevenueSharePct, c.liorExpenseSharePct);
               return (
                 <tr key={c.id}>
                   <td className="table-td">
@@ -69,7 +70,9 @@ export default async function ClientsPage({
                   </td>
                   <td className="table-td num">{c._count.campaigns}</td>
                   <td className="table-td num">{c._count.landingPages}</td>
-                  <td className="table-td num">{fmtIls(outstanding)}</td>
+                  <td className="table-td num">{fmtIls(fin.outstanding)}</td>
+                  <td className="table-td num">{fmtIls(fin.expenses)}</td>
+                  <td className="table-td num">{fmtIls(fin.liorToPay)}</td>
                   {view === "past" && (
                     <td className="table-td num text-muted">
                       {c.endedAt ? c.endedAt.toISOString().slice(0, 10) : "—"}
@@ -90,7 +93,7 @@ export default async function ClientsPage({
             })}
             {!clients.length && (
               <tr>
-                <td className="table-td text-muted" colSpan={view === "past" ? 6 : 5}>
+                <td className="table-td text-muted" colSpan={view === "past" ? 8 : 7}>
                   {view === "past" ? "אין לקוחות בעבר." : "אין עדיין לקוחות."}
                 </td>
               </tr>
