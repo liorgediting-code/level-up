@@ -573,3 +573,12 @@ model Responsibility {
 
   @@index([memberId])
 }
+
+model BusinessExpense {
+  id        String   @id @default(cuid())
+  label     String
+  amount    Float    // whole shekels, same convention as Payment.amount
+  date      DateTime
+  category  String   @default("other") // salary | tools | office | other
+  createdAt DateTime @default(now())
+}
