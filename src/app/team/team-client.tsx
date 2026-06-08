@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 type Responsibility = {
   id: string;
@@ -35,12 +35,13 @@ export default function TeamClient({ members }: { members: Member[] }) {
   async function addMember() {
     if (!newName.trim()) return;
     setBusy(true);
-    await fetch("/api/team/members", {
+    const res = await fetch("/api/team/members", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ name: newName.trim(), role: newRole.trim() }),
     });
     setBusy(false);
+    if (!res.ok) { alert("שגיאה בהוספת חבר צוות"); return; }
     setNewName("");
     setNewRole("");
     setAddOpen(false);
@@ -112,6 +113,9 @@ function MemberCard({
   const [addingResp, setAddingResp] = useState(false);
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => { setName(member.name); }, [member.name]);
+  useEffect(() => { setRole(member.role); }, [member.role]);
+
   async function saveName() {
     setEditingName(false);
     const trimmed = name.trim();
@@ -127,7 +131,7 @@ function MemberCard({
   async function saveRole() {
     setEditingRole(false);
     const trimmed = role.trim();
-    if (trimmed === member.role) return;
+    if (!trimmed || trimmed === member.role) return;
     await fetch(`/api/team/members/${member.id}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
