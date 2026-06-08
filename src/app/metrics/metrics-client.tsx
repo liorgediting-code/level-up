@@ -107,9 +107,21 @@ export default function MetricsClient({
     } else if (k === "week") {
       const match = /^(\d{4})-W(\d{2})$/.exec(key);
       if (match) {
+        // shift by ±7 days and re-derive ISO year+week
         const wYear = Number(match[1]);
-        const wWeek = Number(match[2]) + dir;
-        nav("week", `${wYear}-W${String(wWeek).padStart(2, "0")}`);
+        const wWeek = Number(match[2]);
+        const jan4 = new Date(Date.UTC(wYear, 0, 4));
+        const dow = jan4.getUTCDay() || 7;
+        const firstMonday = new Date(jan4.getTime() - (dow - 1) * 86400000);
+        const weekStart = new Date(firstMonday.getTime() + (wWeek - 1) * 7 * 86400000);
+        const shifted = new Date(weekStart.getTime() + dir * 7 * 86400000);
+        // derive ISO week of shifted date
+        const shiftedDow = shifted.getUTCDay() || 7;
+        const thursday = new Date(shifted.getTime() + (4 - shiftedDow) * 86400000);
+        const newYear = thursday.getUTCFullYear();
+        const jan1 = new Date(Date.UTC(newYear, 0, 1));
+        const newWeek = Math.ceil(((thursday.getTime() - jan1.getTime()) / 86400000 + 1) / 7);
+        nav("week", `${newYear}-W${String(newWeek).padStart(2, "0")}`);
       }
     } else {
       const d = new Date(key);
@@ -319,12 +331,13 @@ function ExpenseList({
     const n = parseFloat(amount);
     if (!label.trim() || isNaN(n) || n <= 0) return;
     setBusy(true);
-    await fetch("/api/expenses", {
+    const res = await fetch("/api/expenses", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ label: label.trim(), amount: n, date, category }),
     });
     setBusy(false);
+    if (!res.ok) { alert("שגיאה בשמירת ההוצאה"); return; }
     setLabel("");
     setAmount("");
     setAdding(false);
@@ -333,7 +346,8 @@ function ExpenseList({
 
   async function deleteExpense(id: string) {
     if (!confirm("למחוק הוצאה זו?")) return;
-    await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+    if (!res.ok) { alert("שגיאה במחיקת ההוצאה"); return; }
     onRefresh();
   }
 
