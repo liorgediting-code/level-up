@@ -21,7 +21,6 @@ export default async function MetricsPage({
     dealsClosed,
     revenueReceived,
     revenueClosed,
-    adSpendAgg,
     expenses,
   ] = await Promise.all([
     prisma.campaignDailyStat.aggregate({
@@ -55,10 +54,6 @@ export default async function MetricsPage({
       where: { occurredAt: { gte: range.start, lt: range.end }, type: "closed" },
       _sum: { amount: true },
     }),
-    prisma.campaignDailyStat.aggregate({
-      where: { date: { gte: range.start, lt: range.end } },
-      _sum: { spend: true },
-    }),
     prisma.businessExpense.findMany({
       where: { date: { gte: range.start, lt: range.end } },
       orderBy: { date: "desc" },
@@ -69,7 +64,7 @@ export default async function MetricsPage({
   const impressions = marketingAgg._sum.impressions ?? 0;
   const clicks = marketingAgg._sum.clicks ?? 0;
   const leads = marketingAgg._sum.leads ?? 0;
-  const totalAdSpend = adSpendAgg._sum.spend ?? 0;
+  const totalAdSpend = spend;
   const totalRevReceived = revenueReceived._sum.amount ?? 0;
   const totalGeneralExp = expenses.reduce((s, e) => s + e.amount, 0);
 
