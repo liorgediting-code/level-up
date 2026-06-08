@@ -12,6 +12,7 @@ const NAV = [
   { href: "/sales", label: "מכירות", icon: MicIcon },
   { href: "/campaigns", label: "קמפיינים", icon: MegaphoneIcon },
   { href: "/team", label: "צוות", icon: PeopleIcon },
+  { href: "/metrics", label: "מדדים", icon: ChartIcon },
   { href: "/crm", label: "CRM", icon: InboxIcon, badgeKey: "unread" as const },
   { href: "/settings", label: "הגדרות", icon: GearIcon },
 ];
@@ -207,6 +208,14 @@ function PeopleIcon(p: React.SVGProps<SVGSVGElement>) {
       <path d="M3 19c.5-2.5 3-4 6-4s5.5 1.5 6 4" />
       <circle cx="17" cy="8" r="2.5" />
       <path d="M20 19c-.3-1.8-1.8-3-4-3" />
+    </svg>
+  );
+}
+function ChartIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="M3 3v18h18" />
+      <path d="M7 16l4-4 4 4 4-5" />
     </svg>
   );
 }
