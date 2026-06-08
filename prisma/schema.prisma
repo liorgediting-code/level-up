@@ -551,3 +551,23 @@ model Target {
   @@index([periodType, periodStart])
   @@index([clientId])
 }
+
+model TeamMember {
+  id               String           @id @default(cuid())
+  name             String
+  role             String           @default("")
+  isAI             Boolean          @default(false)
+  order            Int              @default(0)
+  responsibilities Responsibility[]
+  createdAt        DateTime         @default(now())
+}
+
+model Responsibility {
+  id          String     @id @default(cuid())
+  memberId    String
+  member      TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  label       String
+  isAiHandled Boolean    @default(false)
+  order       Int        @default(0)
+  createdAt   DateTime   @default(now())
+}
