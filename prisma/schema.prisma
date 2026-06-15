@@ -546,10 +546,24 @@ model Target {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  client      Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  client      Client?       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  tasks       TargetTask[]
 
   @@index([periodType, periodStart])
   @@index([clientId])
+}
+
+model TargetTask {
+  id        String   @id @default(cuid())
+  targetId  String
+  title     String
+  status    String   @default("todo") // todo | in_progress | problem | done
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  target    Target   @relation(fields: [targetId], references: [id], onDelete: Cascade)
+
+  @@index([targetId])
 }
 
 model TeamMember {
@@ -581,4 +595,17 @@ model BusinessExpense {
   date      DateTime
   category  String   @default("other") // salary | tools | office | other
   createdAt DateTime @default(now())
+}
+
+model TeamTask {
+  id          String   @id @default(cuid())
+  assignee    String   // liav | lior
+  title       String
+  description String   @default("")
+  status      String   @default("todo") // todo | in_progress | problem | done
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([assignee])
+  @@index([assignee, status])
 }
