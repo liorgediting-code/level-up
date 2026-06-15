@@ -13,6 +13,13 @@ import { formatValue, type MetricUnit } from "@/lib/metrics";
 
 type Lite = { id: string; name: string };
 type Scope = "income" | "client" | "metric";
+type TaskStatus = "todo" | "in_progress" | "problem" | "done";
+
+type TargetTaskRow = {
+  id: string;
+  title: string;
+  status: TaskStatus;
+};
 
 type Target = {
   id: string;
@@ -25,6 +32,7 @@ type Target = {
   unit: MetricUnit;
   targetValue: number;
   actualValue: number;
+  tasks: TargetTaskRow[];
 };
 
 const SCOPE_LABEL: Record<Scope, string> = {
@@ -32,6 +40,22 @@ const SCOPE_LABEL: Record<Scope, string> = {
   client: "לקוח",
   metric: "מדד",
 };
+
+const TASK_STATUS_LABEL: Record<TaskStatus, string> = {
+  todo: "צריך לעשות",
+  in_progress: "בעשייה",
+  problem: "בעיה",
+  done: "הושלמה",
+};
+
+const TASK_STATUS_COLORS: Record<TaskStatus, string> = {
+  todo: "bg-surface text-muted border border-border",
+  in_progress: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  problem: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  done: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+};
+
+const TASK_STATUS_ORDER: TaskStatus[] = ["problem", "in_progress", "todo", "done"];
 
 function toDateInput(unit: MetricUnit, v: number): string {
   return String(unit === "currency" ? Math.round(v / 100) : v);
@@ -41,9 +65,206 @@ function fromInput(unit: MetricUnit, raw: string): number {
   return unit === "currency" ? Math.round(n * 100) : Math.round(n);
 }
 
-export default function GoalsClient(props: { clients: Lite[]; targets: Target[] }) {
+function TargetTasksSection({ target }: { target: Target }) {
   const router = useRouter();
-  const [active, setActive] = useState<PeriodType>("month");
+  const [tasks, setTasks] = useState<TargetTaskRow[]>(target.tasks);
+  const [newTitle, setNewTitle] = useState("");
+  const [adding, setAdding] = useState(false);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    setAdding(true);
+    const res = await fetch(`/api/goals/${target.id}/tasks`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: newTitle.trim() }),
+    });
+    if (res.ok) {
+      const { task } = await res.json();
+      setTasks((prev) => [...prev, task]);
+      setNewTitle("");
+      router.refresh();
+    }
+    setAdding(false);
+  }
+
+  async function handleStatusChange(taskId: string, status: TaskStatus) {
+    const res = await fetch(`/api/goals/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status }),
+    });
+    if (res.ok) {
+      setTasks((prev) => prev.map((t) => (t.id === taskId ? { ...t, status } : t)));
+    }
+  }
+
+  async function handleDelete(taskId: string) {
+    const res = await fetch(`/api/goals/tasks/${taskId}`, { method: "DELETE" });
+    if (res.ok) {
+      setTasks((prev) => prev.filter((t) => t.id !== taskId));
+      router.refresh();
+    }
+  }
+
+  const sorted = [...tasks].sort(
+    (a, b) => TASK_STATUS_ORDER.indexOf(a.status) - TASK_STATUS_ORDER.indexOf(b.status)
+  );
+
+  return (
+    <div className="mt-3 border-t border-border pt-3 space-y-2">
+      <p className="text-[11px] font-semibold text-muted uppercase tracking-wide">משימות</p>
+
+      {sorted.length > 0 && (
+        <div className="space-y-1.5">
+          {sorted.map((task) => (
+            <div
+              key={task.id}
+              className={`group flex items-center gap-2 rounded-lg px-2 py-1.5 ${
+                task.status === "done" ? "opacity-50" : ""
+              }`}
+            >
+              <select
+                value={task.status}
+                onChange={(e) => handleStatusChange(task.id, e.target.value as TaskStatus)}
+                className="rounded border border-border bg-bg px-1.5 py-0.5 text-[11px] text-fg focus:outline-none"
+              >
+                {TASK_STATUS_ORDER.map((s) => (
+                  <option key={s} value={s}>
+                    {TASK_STATUS_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+              <span
+                className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium ${TASK_STATUS_COLORS[task.status]}`}
+              >
+                {TASK_STATUS_LABEL[task.status]}
+              </span>
+              <span
+                className={`flex-1 text-sm ${task.status === "done" ? "line-through text-muted" : "text-fg"}`}
+              >
+                {task.title}
+              </span>
+              <button
+                onClick={() => handleDelete(task.id)}
+                className="opacity-0 group-hover:opacity-100 text-xs text-rose-400 hover:text-rose-600 transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <form onSubmit={handleAdd} className="flex gap-2">
+        <input
+          value={newTitle}
+          onChange={(e) => setNewTitle(e.target.value)}
+          placeholder="הוסף משימה..."
+          disabled={adding}
+          className="min-w-0 flex-1 rounded-lg border border-border bg-bg px-2 py-1.5 text-sm text-fg placeholder:text-muted focus:outline-none focus:ring-1 focus:ring-accent"
+        />
+        <button
+          type="submit"
+          disabled={adding || !newTitle.trim()}
+          className="rounded-lg bg-accent px-3 py-1.5 text-sm text-white disabled:opacity-50"
+        >
+          +
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function TargetCard({
+  t,
+  onPatch,
+  onRemove,
+}: {
+  t: Target;
+  onPatch: (id: string, field: "targetValue" | "actualValue", unit: MetricUnit, raw: string) => void;
+  onRemove: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const pct = t.targetValue > 0 ? Math.min(100, Math.round((t.actualValue / t.targetValue) * 100)) : 0;
+  const problemCount = t.tasks.filter((tk) => tk.status === "problem").length;
+
+  return (
+    <div className="rounded-xl border border-border bg-bg">
+      <div className="p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex items-center gap-2 text-right"
+          >
+            <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent-ink">
+              {SCOPE_LABEL[t.scope]}
+            </span>
+            <span className="font-medium">
+              {t.scope === "client" && t.clientName ? `${t.clientName} · ` : ""}
+              {t.label}
+            </span>
+            {t.tasks.length > 0 && (
+              <span className="flex items-center gap-1 text-[11px] text-muted">
+                <span>{t.tasks.length} משימות</span>
+                {problemCount > 0 && (
+                  <span className="rounded-full bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                    {problemCount} בעיה
+                  </span>
+                )}
+              </span>
+            )}
+            <ChevronIcon
+              className={`h-3.5 w-3.5 text-muted transition-transform ${open ? "rotate-180" : ""}`}
+            />
+          </button>
+          <button onClick={() => onRemove(t.id)} className="text-xs text-rose-500 hover:underline">
+            מחק
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
+          <label className="flex items-center gap-1">
+            <span className="text-[11px] text-muted">בוצע</span>
+            <input
+              defaultValue={toDateInput(t.unit, t.actualValue)}
+              onBlur={(e) => onPatch(t.id, "actualValue", t.unit, e.target.value)}
+              className="w-24 rounded-md border border-border bg-surface px-2 py-1 text-right"
+            />
+          </label>
+          <label className="flex items-center gap-1">
+            <span className="text-[11px] text-muted">יעד</span>
+            <input
+              defaultValue={toDateInput(t.unit, t.targetValue)}
+              onBlur={(e) => onPatch(t.id, "targetValue", t.unit, e.target.value)}
+              className="w-24 rounded-md border border-border bg-surface px-2 py-1 text-right"
+            />
+          </label>
+          <span className="text-xs text-muted">
+            {formatValue(t.actualValue, t.unit)} / {formatValue(t.targetValue, t.unit)}
+          </span>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-border">
+          <div
+            className={`h-full rounded-full ${pct >= 100 ? "bg-emerald-500" : "bg-accent"}`}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+        <div className="mt-1 text-left text-[11px] text-muted">{pct}%</div>
+      </div>
+
+      {open && <TargetTasksSection target={t} />}
+    </div>
+  );
+}
+
+export default function GoalsClient(props: {
+  clients: Lite[];
+  targets: Target[];
+  initialTab: PeriodType;
+}) {
+  const router = useRouter();
+  const [active, setActive] = useState<PeriodType>(props.initialTab);
 
   // add form
   const [scope, setScope] = useState<Scope>("income");
@@ -229,59 +450,26 @@ export default function GoalsClient(props: { clients: Lite[]; targets: Target[] 
           <section key={periodStart} className="space-y-3 rounded-2xl border border-border bg-surface p-4">
             <h2 className="text-sm font-semibold">{periodLabelHe(active, new Date(periodStart))}</h2>
             <div className="space-y-2">
-              {items.map((t) => {
-                const pct = t.targetValue > 0 ? Math.min(100, Math.round((t.actualValue / t.targetValue) * 100)) : 0;
-                return (
-                  <div key={t.id} className="rounded-xl border border-border bg-bg p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-accent-soft px-2 py-0.5 text-[11px] text-accent-ink">
-                          {SCOPE_LABEL[t.scope]}
-                        </span>
-                        <span className="font-medium">
-                          {t.scope === "client" && t.clientName ? `${t.clientName} · ` : ""}
-                          {t.label}
-                        </span>
-                      </div>
-                      <button onClick={() => remove(t.id)} className="text-xs text-rose-500 hover:underline">
-                        מחק
-                      </button>
-                    </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-sm">
-                      <label className="flex items-center gap-1">
-                        <span className="text-[11px] text-muted">בוצע</span>
-                        <input
-                          defaultValue={toDateInput(t.unit, t.actualValue)}
-                          onBlur={(e) => patch(t.id, "actualValue", t.unit, e.target.value)}
-                          className="w-24 rounded-md border border-border bg-surface px-2 py-1 text-right"
-                        />
-                      </label>
-                      <label className="flex items-center gap-1">
-                        <span className="text-[11px] text-muted">יעד</span>
-                        <input
-                          defaultValue={toDateInput(t.unit, t.targetValue)}
-                          onBlur={(e) => patch(t.id, "targetValue", t.unit, e.target.value)}
-                          className="w-24 rounded-md border border-border bg-surface px-2 py-1 text-right"
-                        />
-                      </label>
-                      <span className="text-xs text-muted">
-                        {formatValue(t.actualValue, t.unit)} / {formatValue(t.targetValue, t.unit)}
-                      </span>
-                    </div>
-                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-border">
-                      <div
-                        className={`h-full rounded-full ${pct >= 100 ? "bg-emerald-500" : "bg-accent"}`}
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <div className="mt-1 text-left text-[11px] text-muted">{pct}%</div>
-                  </div>
-                );
-              })}
+              {items.map((t) => (
+                <TargetCard
+                  key={t.id}
+                  t={t}
+                  onPatch={patch}
+                  onRemove={remove}
+                />
+              ))}
             </div>
           </section>
         ))
       )}
     </div>
+  );
+}
+
+function ChevronIcon(p: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...p}>
+      <path d="m6 9 6 6 6-6" />
+    </svg>
   );
 }
