@@ -14,7 +14,7 @@ export default async function ClientLayout({
   const { id } = await params;
   const client = await prisma.client.findUnique({
     where: { id },
-    select: { id: true, name: true, description: true, endedAt: true },
+    select: { id: true, name: true, description: true, endedAt: true, clientType: true },
   });
   if (!client) notFound();
 
@@ -46,7 +46,7 @@ export default async function ClientLayout({
           redirectAfterDelete="/clients"
         />
       </div>
-      <ClientTabs clientId={client.id} />
+      <ClientTabs clientId={client.id} clientType={client.clientType} />
       <div>{children}</div>
     </div>
   );
