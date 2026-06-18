@@ -16,6 +16,8 @@ model Client {
   salesMeetingsTarget Int?
   liorRevenueSharePct Float?   // אחוז חלקו של ליאור מההכנסה
   liorExpenseSharePct Float?   // אחוז השתתפותו של ליאור בהוצאות
+  clientType          String   @default("standard")  // "standard" | "recruitment"
+  excelUrl            String?
   endedAt             DateTime?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
@@ -36,6 +38,7 @@ model Client {
   metricRows          ClientMetricRow[]
   notes               Note[]
   targets             Target[]
+  recruitment         RecruitmentProfile?
 }
 
 model ClientAsset {
@@ -69,9 +72,36 @@ model Payment {
   amount     Float
   currency   String   @default("ILS")
   note       String?
+  source     String?  // "recruitment" for auto-created placement payments
   occurredAt DateTime @default(now())
   client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
+  @@index([clientId])
+}
+
+model RecruitmentProfile {
+  clientId            String   @id
+  pricePerSalesperson Float?
+  currency            String   @default("ILS")
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  client Client             @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  stages RecruitmentStage[]
+}
+
+model RecruitmentStage {
+  id          String    @id @default(cuid())
+  clientId    String
+  index       Int       // 0..3
+  kind        String    // "characterize" | "bring" | "interviews" | "closing"
+  status      String    @default("locked")  // "locked" | "active" | "done"
+  completedAt DateTime?
+  note        String    @default("")
+
+  profile RecruitmentProfile @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+
+  @@unique([clientId, index])
   @@index([clientId])
 }
 
