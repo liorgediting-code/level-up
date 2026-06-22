@@ -10,6 +10,7 @@ const Body = z.object({
   description: z.string().nullable().optional(),
   status: z.string().optional(),
   salesMeetingsTarget: z.number().int().min(0).nullable().optional(),
+  coachingMonths: z.number().int().min(0).nullable().optional(),
   liorRevenueSharePct: z.number().min(0).max(100).nullable().optional(),
   liorExpenseSharePct: z.number().min(0).max(100).nullable().optional(),
   endedAt: z.union([z.string(), z.null()]).optional(),
