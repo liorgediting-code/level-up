@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { summarizeClientFinance } from "@/lib/finance";
+import { coachingStatus } from "@/lib/clients/coaching";
 
 type LinkRow = { id: string; label: string; url: string };
 type Payment = { id: string; type: string; amount: number; currency: string; note: string | null; occurredAt: string };
@@ -39,6 +40,8 @@ export default function ClientPortfolio(props: {
   payments: Payment[];
   landingPages: LP[];
   analysisRuns: Run[];
+  createdAt: string;
+  coachingMonths: number | null;
 }) {
   const router = useRouter();
   const refresh = () => router.refresh();
@@ -46,6 +49,7 @@ export default function ClientPortfolio(props: {
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <DescriptionEditor clientId={props.clientId} initial={props.description ?? ""} onSaved={refresh} />
+      <CoachingBox clientId={props.clientId} createdAt={props.createdAt} coachingMonths={props.coachingMonths} onChange={refresh} />
       <LinksBox clientId={props.clientId} links={props.links} onChange={refresh} />
       <PaymentsBox clientId={props.clientId} payments={props.payments} onChange={refresh} />
       <ExpensesBox clientId={props.clientId} payments={props.payments} onChange={refresh} />
@@ -201,6 +205,57 @@ function ExpensesBox({ clientId, payments, onChange }: { clientId: string; payme
       <div className="mt-2 flex justify-start">
         <button onClick={add} className="btn-ghost">רשום הוצאה</button>
       </div>
+    </div>
+  );
+}
+
+function CoachingBox({ clientId, createdAt, coachingMonths, onChange }: { clientId: string; createdAt: string; coachingMonths: number | null; onChange: () => void }) {
+  const [months, setMonths] = useState(coachingMonths == null ? "" : String(coachingMonths));
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    const raw = months.trim();
+    const value = raw === "" ? null : Number(raw);
+    if (value !== null && (!Number.isInteger(value) || value < 0)) {
+      alert("מספר חודשים לא תקין");
+      return;
+    }
+    setSaving(true);
+    const res = await fetch(`/api/clients/${clientId}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ coachingMonths: value }),
+    });
+    setSaving(false);
+    if (!res.ok) { alert("שמירת חודשי הליווי נכשלה"); return; }
+    onChange();
+  }
+
+  const cs = coachingMonths != null ? coachingStatus(new Date(createdAt), coachingMonths) : null;
+  const fmt = (d: Date) => d.toLocaleDateString("he-IL", { day: "2-digit", month: "2-digit", year: "numeric" });
+
+  return (
+    <div className="card">
+      <h2 className="mb-3 font-semibold">ליווי</h2>
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        <label className="flex flex-col gap-1 text-xs text-muted">
+          חודשי ליווי
+          <input className="input" type="number" inputMode="numeric" min={0} placeholder="מס׳ חודשים" value={months} onChange={(e) => setMonths(e.target.value)} />
+        </label>
+        <div className="flex items-end">
+          <button onClick={save} disabled={saving} className="btn-primary w-full">{saving ? "שומר…" : "שמור"}</button>
+        </div>
+      </div>
+      {cs && (
+        <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
+          <span>תחילת ליווי: {fmt(new Date(createdAt))} · {coachingMonths} חודשים · מסתיים {fmt(cs.endsAt)}</span>
+          {cs.finished ? (
+            <span className="rounded px-1.5 py-0.5 text-bad ring-1 ring-bad/40">הסתיים</span>
+          ) : (
+            <span className="rounded px-1.5 py-0.5 text-good ring-1 ring-good/40">נותרו {cs.monthsLeft} חודשים</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }
