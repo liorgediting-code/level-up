@@ -90,6 +90,8 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
       <ClientPortfolio
         clientId={client.id}
+        createdAt={client.createdAt.toISOString()}
+        coachingMonths={client.coachingMonths}
         description={client.description}
         links={client.links}
         liorRevenueSharePct={client.liorRevenueSharePct}
