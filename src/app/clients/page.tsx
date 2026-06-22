@@ -4,6 +4,7 @@ import NewClientForm from "./new-client-form";
 import ClientRowActions from "./client-row-actions";
 import { fmtIls } from "@/lib/utils";
 import { summarizeClientFinance } from "@/lib/finance";
+import { coachingStatus } from "@/lib/clients/coaching";
 
 export const dynamic = "force-dynamic";
 
@@ -63,9 +64,14 @@ export default async function ClientsPage({
               return (
                 <tr key={c.id}>
                   <td className="table-td">
-                    <Link href={`/clients/${c.id}`} className="font-medium hover:text-accent">
-                      {c.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/clients/${c.id}`} className="font-medium hover:text-accent">
+                        {c.name}
+                      </Link>
+                      {view === "active" && coachingStatus(c.createdAt, c.coachingMonths)?.finished && (
+                        <span className="rounded px-1.5 py-0.5 text-[11px] text-bad ring-1 ring-bad/40">הסתיים</span>
+                      )}
+                    </div>
                     {c.description && <div className="text-xs text-muted">{c.description}</div>}
                   </td>
                   <td className="table-td num">{c._count.campaigns}</td>
